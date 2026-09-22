@@ -3,28 +3,33 @@ set -eu
 
 project_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$project_dir"
-swift build --build-system native -c release --product CountdownMenuBar
+countdown_developer_dir="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
+if [ ! -x "$countdown_developer_dir/usr/bin/xcodebuild" ]; then
+    echo "Building the native widget requires Xcode. Install Xcode or set DEVELOPER_DIR to its Contents/Developer folder." >&2
+    exit 1
+fi
+
+countdown_build_root=$(mktemp -d "${TMPDIR:-/tmp}/countdown-build.XXXXXX")
+trap 'rm -rf "$countdown_build_root"' EXIT
+# Keep Xcode's coordinated project reads away from managed Documents folders.
+for source in Countdown.xcodeproj Sources Widgets Build Assets; do
+    ditto "$project_dir/$source" "$countdown_build_root/$source"
+done
+
+DEVELOPER_DIR="$countdown_developer_dir" xcodebuild \
+    -project "$countdown_build_root/Countdown.xcodeproj" -scheme Countdown -configuration Release \
+    -derivedDataPath "$countdown_build_root/DerivedData" -quiet \
+    CODE_SIGN_IDENTITY="${COUNTDOWN_SIGN_IDENTITY:--}" build
 
 app="$project_dir/dist/Countdown Menu Bar.app"
-mkdir -p "$app/Contents/MacOS"
-cp "$project_dir/.build/release/CountdownMenuBar" "$app/Contents/MacOS/CountdownMenuBar"
-cat > "$app/Contents/Info.plist" <<'PLIST'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleDevelopmentRegion</key><string>en</string>
-    <key>CFBundleExecutable</key><string>CountdownMenuBar</string>
-    <key>CFBundleIdentifier</key><string>com.local.CountdownMenuBar</string>
-    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
-    <key>CFBundleName</key><string>Countdown Menu Bar</string>
-    <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>1.0.0</string>
-    <key>CFBundleVersion</key><string>1</string>
-    <key>LSMinimumSystemVersion</key><string>13.0</string>
-    <key>LSUIElement</key><true/>
-    <key>NSHighResolutionCapable</key><true/>
-</dict>
-</plist>
-PLIST
-echo "Built $app"
+mkdir -p "$project_dir/dist"
+countdown_product="$countdown_build_root/DerivedData/Build/Products/Release/Countdown Menu Bar.app"
+ditto "$countdown_product" "$app"
+# Finder/file-provider metadata can be added while copying into Documents.
+xattr -dr com.apple.FinderInfo "$app" 2>/dev/null || true
+xattr -dr com.apple.ResourceFork "$app" 2>/dev/null || true
+codesign --verify --deep --strict "$app"
+countdown_lsregister=/System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister
+"$countdown_lsregister" -u "$countdown_product" || true
+"$countdown_lsregister" -f "$app"
+echo "Built $app (includes Countdown Events widget)"

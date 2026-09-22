@@ -1,0 +1,512 @@
+// !$*UTF8*$!
+{
+	"classes" = {
+	};
+	"objectVersion" = "56";
+	"archiveVersion" = "1";
+	"objects" = {
+		"A9181351A1FEE60D4A78323F" = {
+			"isa" = "PBXTargetDependency";
+			"target" = "FAD79F600E79F84B420BD567";
+			"targetProxy" = "937A01D863611CD7A85B6FE9";
+		};
+		"268D2D29669C504AD910B275" = {
+			"isa" = "XCConfigurationList";
+			"defaultConfigurationIsVisible" = "0";
+			"defaultConfigurationName" = "Release";
+			"buildConfigurations" = (
+				"EF00B4C26D3BA245CBAB3F00",
+				"49B4940C5F901788C278DD41",
+			);
+		};
+		"CDFDB1CDDD7B02419961FFB2" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "7EF92EFA5C7498DC110ED3F9";
+		};
+		"0437FE559197B290E488D3C5" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "6F6F64C75BCB333418E9A5DA";
+		};
+		"A17B226DFB8D6D6B6D2940B3" = {
+			"path" = "Build/App-Info.plist";
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text.plist.xml";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"82CE34952E166218838BE670" = {
+			"isa" = "PBXSourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+				"CDFDB1CDDD7B02419961FFB2",
+				"7F5CCF09B29862E9075B45CF",
+				"17162FA14FDF0099F8F00347",
+				"F49F69DAFA89FBDE7BC13710",
+				"D140AC0E575561F7203AEC89",
+				"F2A726FCE0983D681651C7F3",
+			);
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"870B3294C0CBD48AF6BBCC1B" = {
+			"isa" = "PBXGroup";
+			"sourceTree" = "<group>";
+			"children" = (
+				"96DC7B6B5526E30EFB51C316",
+				"9A9EF54833B45752B2579676",
+				"B6561938591A059DEBBCECA2",
+				"615B463D1028E4E24B674CF7",
+				"5FBE5D745A7BE9FE95E156BF",
+			);
+		};
+		"BB27AD7BBFDDAC09C73BE453" = {
+			"buildActionMask" = "2147483647";
+			"dstSubfolderSpec" = "13";
+			"isa" = "PBXCopyFilesBuildPhase";
+			"runOnlyForDeploymentPostprocessing" = "0";
+			"dstPath" = "";
+			"files" = (
+				"00FE87CFFF873032D10B4738",
+			);
+			"name" = "Embed App Extensions";
+		};
+		"F798EBFF4F2A8A324CA0CAF3" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "00BD074C83B95DBAA522236E";
+		};
+		"CF2715DE780065BE8B22563B" = {
+			"path" = "Build/Widget.entitlements";
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text.plist.xml";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"206E8912C3EBED98E8D1169F" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "072C269C96C3F60CF995466F";
+		};
+		"072C269C96C3F60CF995466F" = {
+			"path" = "Sources/CountdownMenuBar/MoonIcon.swift";
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"8ECC8B5D05B79F879ACDF1A2" = {
+			"isa" = "PBXResourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+				"BC2DFC1DED2CB147D19DAA27",
+			);
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"CA26578A15E7534361BF6A1F" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Release";
+			"buildSettings" = {
+				"SWIFT_OPTIMIZATION_LEVEL" = "-O";
+				"CODE_SIGN_ENTITLEMENTS" = "Build/Widget.entitlements";
+				"SWIFT_COMPILATION_MODE" = "wholemodule";
+				"ENABLE_APP_SANDBOX" = "YES";
+				"INFOPLIST_FILE" = "Build/Widget-Info.plist";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.local.CountdownMenuBar.EventsWidget";
+				"SKIP_INSTALL" = "YES";
+				"APPLICATION_EXTENSION_API_ONLY" = "YES";
+				"MACOSX_DEPLOYMENT_TARGET" = "14.0";
+				"PRODUCT_NAME" = "CountdownEventsWidget";
+				"LD_RUNPATH_SEARCH_PATHS" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+			};
+		};
+		"29B4F17CF49A225F3631C907" = {
+			"path" = "Sources/CountdownMenuBar/EventEditor.swift";
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"6F6F64C75BCB333418E9A5DA" = {
+			"path" = "Sources/CountdownMenuBar/EventTimeZone.swift";
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"BE917C574068730EC647741E" = {
+			"path" = "Build/Widget-Info.plist";
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text.plist.xml";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"949D493B91791558E87BC5D7" = {
+			"isa" = "PBXSourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+				"7F1F506A5FA85EBD7EBA008B",
+				"F798EBFF4F2A8A324CA0CAF3",
+				"B48DC8205B5C4AE0996CBECF",
+				"50D4CD32197998F705EA5F3A",
+				"0437FE559197B290E488D3C5",
+				"206E8912C3EBED98E8D1169F",
+				"FB4011A5DE7911E2D02DC8CB",
+				"3738099ACE4D387EEC52AEF1",
+			);
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"B48DC8205B5C4AE0996CBECF" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "B2DC3E914EA2C4757AC543C1";
+		};
+		"7F5CCF09B29862E9075B45CF" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "00BD074C83B95DBAA522236E";
+		};
+		"937A01D863611CD7A85B6FE9" = {
+			"isa" = "PBXContainerItemProxy";
+			"containerPortal" = "98F54143AB4E86B28C3AFEE0";
+			"remoteGlobalIDString" = "FAD79F600E79F84B420BD567";
+			"remoteInfo" = "CountdownEventsWidget";
+			"proxyType" = "1";
+		};
+		"F2A726FCE0983D681651C7F3" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "45F95B446D1891AFBCE153B5";
+		};
+		"4E783A9E10D2A8ABA38CD11C" = {
+			"path" = "Countdown Menu Bar.app";
+			"isa" = "PBXFileReference";
+			"includeInIndex" = "0";
+			"explicitFileType" = "wrapper.application";
+			"sourceTree" = "BUILT_PRODUCTS_DIR";
+		};
+		"7F1F506A5FA85EBD7EBA008B" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "E45C6A7F5BFFE00C4B3D9E5A";
+		};
+		"17162FA14FDF0099F8F00347" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "B2DC3E914EA2C4757AC543C1";
+		};
+		"AB52CB08E0FDF02BF6C67C33" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Debug";
+			"buildSettings" = {
+				"CLANG_ENABLE_MODULES" = "YES";
+				"CODE_SIGN_IDENTITY" = "-";
+				"MACOSX_DEPLOYMENT_TARGET" = "13.0";
+				"CODE_SIGN_INJECT_BASE_ENTITLEMENTS" = "NO";
+				"GENERATE_INFOPLIST_FILE" = "NO";
+				"SWIFT_COMPILATION_MODE" = "singlefile";
+				"SWIFT_OPTIMIZATION_LEVEL" = "-Onone";
+				"SUPPORTED_PLATFORMS" = "macosx";
+				"CODE_SIGN_STYLE" = "Manual";
+				"SDKROOT" = "macosx";
+				"SWIFT_VERSION" = "5.0";
+				"ENABLE_HARDENED_RUNTIME" = "YES";
+			};
+		};
+		"3738099ACE4D387EEC52AEF1" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "45F95B446D1891AFBCE153B5";
+		};
+		"D1FC3980C62A8D20F6C0FFF0" = {
+			"path" = "CountdownEventsWidget.appex";
+			"isa" = "PBXFileReference";
+			"includeInIndex" = "0";
+			"explicitFileType" = "wrapper.app-extension";
+			"sourceTree" = "BUILT_PRODUCTS_DIR";
+		};
+		"D140AC0E575561F7203AEC89" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "203505F98E4D7FD47D25D2F7";
+		};
+		"F49F69DAFA89FBDE7BC13710" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "6F6F64C75BCB333418E9A5DA";
+		};
+		"5283471FF90C511CFE244FFF" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Release";
+			"buildSettings" = {
+				"CLANG_ENABLE_MODULES" = "YES";
+				"CODE_SIGN_IDENTITY" = "-";
+				"MACOSX_DEPLOYMENT_TARGET" = "13.0";
+				"CODE_SIGN_INJECT_BASE_ENTITLEMENTS" = "NO";
+				"GENERATE_INFOPLIST_FILE" = "NO";
+				"SWIFT_COMPILATION_MODE" = "wholemodule";
+				"SWIFT_OPTIMIZATION_LEVEL" = "-O";
+				"SUPPORTED_PLATFORMS" = "macosx";
+				"CODE_SIGN_STYLE" = "Manual";
+				"SDKROOT" = "macosx";
+				"SWIFT_VERSION" = "5.0";
+				"ENABLE_HARDENED_RUNTIME" = "YES";
+			};
+		};
+		"7EF92EFA5C7498DC110ED3F9" = {
+			"path" = "Widgets/CountdownEventsWidget.swift";
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"E45C6A7F5BFFE00C4B3D9E5A" = {
+			"path" = "Sources/CountdownMenuBar/CountdownApp.swift";
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"FB4011A5DE7911E2D02DC8CB" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "203505F98E4D7FD47D25D2F7";
+		};
+		"50D4CD32197998F705EA5F3A" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "29B4F17CF49A225F3631C907";
+		};
+		"6650A2B5E24FA7522CE6B81C" = {
+			"isa" = "XCConfigurationList";
+			"defaultConfigurationIsVisible" = "0";
+			"defaultConfigurationName" = "Release";
+			"buildConfigurations" = (
+				"AB52CB08E0FDF02BF6C67C33",
+				"5283471FF90C511CFE244FFF",
+			);
+		};
+		"00BD074C83B95DBAA522236E" = {
+			"path" = "Sources/CountdownMenuBar/CountdownEvent.swift";
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"EF00B4C26D3BA245CBAB3F00" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Debug";
+			"buildSettings" = {
+				"EXECUTABLE_NAME" = "CountdownMenuBar";
+				"SWIFT_COMPILATION_MODE" = "singlefile";
+				"ENABLE_APP_SANDBOX" = "NO";
+				"INFOPLIST_FILE" = "Build/App-Info.plist";
+				"LD_RUNPATH_SEARCH_PATHS" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				"PRODUCT_MODULE_NAME" = "CountdownMenuBar";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.local.CountdownMenuBar";
+				"SWIFT_OPTIMIZATION_LEVEL" = "-Onone";
+				"PRODUCT_NAME" = "Countdown Menu Bar";
+			};
+		};
+		"BD92572B49AC16A86614498D" = {
+			"isa" = "PBXFrameworksBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+			);
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"B6561938591A059DEBBCECA2" = {
+			"isa" = "PBXGroup";
+			"name" = "Build Configuration";
+			"children" = (
+				"BE917C574068730EC647741E",
+				"CF2715DE780065BE8B22563B",
+				"A17B226DFB8D6D6B6D2940B3",
+			);
+			"sourceTree" = "<group>";
+		};
+		"F75109BEB4DD8800DA6B45F8" = {
+			"productReference" = "4E783A9E10D2A8ABA38CD11C";
+			"productType" = "com.apple.product-type.application";
+			"buildConfigurationList" = "268D2D29669C504AD910B275";
+			"productName" = "Countdown Menu Bar";
+			"isa" = "PBXNativeTarget";
+			"buildPhases" = (
+				"949D493B91791558E87BC5D7",
+				"BD92572B49AC16A86614498D",
+				"8ECC8B5D05B79F879ACDF1A2",
+				"BB27AD7BBFDDAC09C73BE453",
+			);
+			"dependencies" = (
+				"A9181351A1FEE60D4A78323F",
+			);
+			"name" = "CountdownMenuBar";
+			"buildRules" = (
+			);
+		};
+		"49B4940C5F901788C278DD41" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Release";
+			"buildSettings" = {
+				"EXECUTABLE_NAME" = "CountdownMenuBar";
+				"SWIFT_COMPILATION_MODE" = "wholemodule";
+				"ENABLE_APP_SANDBOX" = "NO";
+				"INFOPLIST_FILE" = "Build/App-Info.plist";
+				"LD_RUNPATH_SEARCH_PATHS" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				"PRODUCT_MODULE_NAME" = "CountdownMenuBar";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.local.CountdownMenuBar";
+				"SWIFT_OPTIMIZATION_LEVEL" = "-O";
+				"PRODUCT_NAME" = "Countdown Menu Bar";
+			};
+		};
+		"9A9EF54833B45752B2579676" = {
+			"isa" = "PBXGroup";
+			"name" = "Widget";
+			"children" = (
+				"7EF92EFA5C7498DC110ED3F9",
+			);
+			"sourceTree" = "<group>";
+		};
+		"203505F98E4D7FD47D25D2F7" = {
+			"path" = "Sources/CountdownMenuBar/MoonProgress.swift";
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"112482586DC9325ECD958FF1" = {
+			"isa" = "PBXFrameworksBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+			);
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"FAD79F600E79F84B420BD567" = {
+			"productReference" = "D1FC3980C62A8D20F6C0FFF0";
+			"productType" = "com.apple.product-type.app-extension";
+			"buildConfigurationList" = "91F11B0BFBBBE4BF09EA8F48";
+			"productName" = "CountdownEventsWidget";
+			"isa" = "PBXNativeTarget";
+			"buildPhases" = (
+				"82CE34952E166218838BE670",
+				"112482586DC9325ECD958FF1",
+				"2093904A82FF706A79646301",
+			);
+			"dependencies" = (
+			);
+			"name" = "CountdownEventsWidget";
+			"buildRules" = (
+			);
+		};
+		"615B463D1028E4E24B674CF7" = {
+			"isa" = "PBXGroup";
+			"name" = "Products";
+			"children" = (
+				"4E783A9E10D2A8ABA38CD11C",
+				"D1FC3980C62A8D20F6C0FFF0",
+			);
+			"sourceTree" = "<group>";
+		};
+		"2093904A82FF706A79646301" = {
+			"isa" = "PBXResourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+			);
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"98F54143AB4E86B28C3AFEE0" = {
+			"buildConfigurationList" = "6650A2B5E24FA7522CE6B81C";
+			"targets" = (
+				"F75109BEB4DD8800DA6B45F8",
+				"FAD79F600E79F84B420BD567",
+			);
+			"developmentRegion" = "en";
+			"knownRegions" = (
+				"en",
+				"Base",
+			);
+			"isa" = "PBXProject";
+			"compatibilityVersion" = "Xcode 14.0";
+			"productRefGroup" = "615B463D1028E4E24B674CF7";
+			"projectDirPath" = "";
+			"attributes" = {
+				"LastUpgradeCheck" = "1600";
+				"BuildIndependentTargetsInParallel" = "YES";
+			};
+			"hasScannedForEncodings" = "0";
+			"projectRoot" = "";
+			"mainGroup" = "870B3294C0CBD48AF6BBCC1B";
+		};
+		"45F95B446D1891AFBCE153B5" = {
+			"path" = "Sources/CountdownMenuBar/WidgetEventData.swift";
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"91F11B0BFBBBE4BF09EA8F48" = {
+			"isa" = "XCConfigurationList";
+			"defaultConfigurationIsVisible" = "0";
+			"defaultConfigurationName" = "Release";
+			"buildConfigurations" = (
+				"A5F76F131F0062F90BEF60DA",
+				"CA26578A15E7534361BF6A1F",
+			);
+		};
+		"00FE87CFFF873032D10B4738" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "D1FC3980C62A8D20F6C0FFF0";
+			"settings" = {
+				"ATTRIBUTES" = (
+					"RemoveHeadersOnCopy",
+				);
+			};
+		};
+		"96DC7B6B5526E30EFB51C316" = {
+			"isa" = "PBXGroup";
+			"name" = "Menu Bar App";
+			"children" = (
+				"E45C6A7F5BFFE00C4B3D9E5A",
+				"00BD074C83B95DBAA522236E",
+				"B2DC3E914EA2C4757AC543C1",
+				"29B4F17CF49A225F3631C907",
+				"6F6F64C75BCB333418E9A5DA",
+				"072C269C96C3F60CF995466F",
+				"203505F98E4D7FD47D25D2F7",
+				"45F95B446D1891AFBCE153B5",
+			);
+			"sourceTree" = "<group>";
+		};
+		"B2DC3E914EA2C4757AC543C1" = {
+			"path" = "Sources/CountdownMenuBar/CountdownFormat.swift";
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"A5F76F131F0062F90BEF60DA" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Debug";
+			"buildSettings" = {
+				"SWIFT_OPTIMIZATION_LEVEL" = "-Onone";
+				"CODE_SIGN_ENTITLEMENTS" = "Build/Widget.entitlements";
+				"SWIFT_COMPILATION_MODE" = "singlefile";
+				"ENABLE_APP_SANDBOX" = "YES";
+				"INFOPLIST_FILE" = "Build/Widget-Info.plist";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.local.CountdownMenuBar.EventsWidget";
+				"SKIP_INSTALL" = "YES";
+				"APPLICATION_EXTENSION_API_ONLY" = "YES";
+				"MACOSX_DEPLOYMENT_TARGET" = "14.0";
+				"PRODUCT_NAME" = "CountdownEventsWidget";
+				"LD_RUNPATH_SEARCH_PATHS" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+			};
+		};
+		"30E7370750234B3AE8DCA8F7" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "image.icns";
+			"path" = "Assets/CountdownIcon.icns";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"BC2DFC1DED2CB147D19DAA27" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "30E7370750234B3AE8DCA8F7";
+		};
+		"5FBE5D745A7BE9FE95E156BF" = {
+			"isa" = "PBXGroup";
+			"name" = "Assets";
+			"children" = (
+				"30E7370750234B3AE8DCA8F7",
+			);
+			"sourceTree" = "<group>";
+		};
+	};
+	"rootObject" = "98F54143AB4E86B28C3AFEE0";
+}

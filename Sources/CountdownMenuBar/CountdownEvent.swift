@@ -4,15 +4,36 @@ struct CountdownEvent: Codable, Identifiable, Equatable {
     let id: UUID
     var title: String
     var date: Date
+    var timeZoneIdentifier: String
 
-    init(id: UUID = UUID(), title: String, date: Date) {
+    init(id: UUID = UUID(), title: String, date: Date, timeZoneIdentifier: String = TimeZone.current.identifier) {
         self.id = id
         self.title = title
         self.date = date
+        self.timeZoneIdentifier = timeZoneIdentifier
+    }
+
+    var timeZone: TimeZone {
+        EventTimeZone.resolve(timeZoneIdentifier) ?? .current
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, title, date, timeZoneIdentifier
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(UUID.self, forKey: .id)
+        title = try values.decode(String.self, forKey: .title)
+        date = try values.decode(Date.self, forKey: .date)
+        let savedZone = try values.decodeIfPresent(String.self, forKey: .timeZoneIdentifier)
+        timeZoneIdentifier = savedZone.flatMap { EventTimeZone.resolve($0) == nil ? nil : $0 }
+            ?? TimeZone.current.identifier
     }
 }
 
 final class EventStore {
+    var onEventsChanged: (() -> Void)?
     private let defaults: UserDefaults
     private let eventsKey = "countdown.events"
     private let selectedIDKey = "countdown.selectedEventID"
@@ -32,6 +53,8 @@ final class EventStore {
         if selectedEvent == nil {
             selectedID = sortedEvents.first?.id
         }
+        // Persist the assigned zone for legacy events without changing their instants.
+        if !events.isEmpty { persist() }
     }
 
     var sortedEvents: [CountdownEvent] {
@@ -53,6 +76,7 @@ final class EventStore {
         }
         selectedID = event.id
         persist()
+        onEventsChanged?()
     }
 
     func select(_ id: UUID) {
@@ -66,10 +90,13 @@ final class EventStore {
         events.removeAll { $0.id == selectedID }
         self.selectedID = sortedEvents.first?.id
         persist()
+        onEventsChanged?()
     }
 
     private func persist() {
         defaults.set(try? JSONEncoder().encode(events), forKey: eventsKey)
         defaults.set(selectedID?.uuidString, forKey: selectedIDKey)
+        // Publish writes before the widget's separate process reloads its timeline.
+        defaults.synchronize()
     }
 }

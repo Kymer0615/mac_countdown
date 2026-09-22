@@ -1,4 +1,5 @@
 import AppKit
+import WidgetKit
 
 @MainActor
 final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
@@ -6,29 +7,52 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let menu = NSMenu()
     private var timer: Timer?
+    private lazy var moonAnimator = MoonAnimator(button: statusItem.button)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        store.onEventsChanged = { WidgetCenter.shared.reloadTimelines(ofKind: WidgetEventData.kind) }
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetEventData.kind)
         menu.delegate = self
+        menu.autoenablesItems = false
         statusItem.menu = menu
+        statusItem.button?.imagePosition = .imageLeading
         refresh()
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.refresh() }
-        }
+        timer = Timer(timeInterval: 1, target: self, selector: #selector(refresh), userInfo: nil, repeats: true)
         timer?.tolerance = 0.1
+        if let timer { RunLoop.main.add(timer, forMode: .common) }
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
         populateMenu()
     }
 
-    private func refresh() {
+    func application(_ application: NSApplication, open urls: [URL]) {
+        guard let url = urls.first, url.scheme == "countdownmenubar" else { return }
+        if url.host == "add" {
+            addEvent()
+            return
+        }
+        if url.host == "event", let id = UUID(uuidString: url.lastPathComponent) {
+            store.select(id)
+            refresh()
+        }
+        statusItem.button?.performClick(nil)
+    }
+
+    @objc private func refresh() {
+        let now = Date()
         if let event = store.selectedEvent {
-            statusItem.button?.title = "⏳ \(event.title): \(CountdownFormat.remaining(until: event.date))"
-            statusItem.button?.toolTip = "\(event.title) — \(fullDate(event.date))"
+            let remaining = event.date.timeIntervalSince(now)
+            statusItem.button?.title = "\(event.title) · \(CountdownFormat.compact(until: event.date, now: now))"
+            statusItem.button?.toolTip = "\(event.title) — \(fullDate(event))"
+            statusItem.button?.setAccessibilityLabel("\(event.title), \(CountdownFormat.remaining(until: event.date, now: now)). \(fullDate(event))")
+            moonAnimator.update(progress: MoonProgress.value(remaining: remaining), completed: remaining <= 0)
         } else {
+            moonAnimator.reset()
             statusItem.button?.title = "⏳ Add event"
             statusItem.button?.toolTip = "Click to add a countdown event"
+            statusItem.button?.setAccessibilityLabel("Add countdown event")
         }
         updateEventMenuItems()
     }
@@ -38,8 +62,7 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
             guard let rawID = item.representedObject as? String,
                   let id = UUID(uuidString: rawID),
                   let event = store.events.first(where: { $0.id == id }) else { continue }
-            let countdown = CountdownFormat.remaining(until: event.date)
-            item.title = "\(event.title)  ·  \(fullDate(event.date))  ·  \(countdown)"
+            item.title = menuTitle(for: event)
             item.state = event.id == store.selectedID ? .on : .off
         }
     }
@@ -56,9 +79,8 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
             menu.addItem(empty)
         } else {
             for event in store.sortedEvents {
-                let countdown = CountdownFormat.remaining(until: event.date)
                 let item = NSMenuItem(
-                    title: "\(event.title)  ·  \(fullDate(event.date))  ·  \(countdown)",
+                    title: menuTitle(for: event),
                     action: #selector(selectEvent(_:)),
                     keyEquivalent: ""
                 )
@@ -105,54 +127,10 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func presentEditor(event: CountdownEvent?, initialDate: Date) {
-        NSApp.activate(ignoringOtherApps: true)
-        let alert = NSAlert()
-        alert.messageText = event == nil ? "Add Event" : "Edit Event"
-        alert.informativeText = "Choose a name and an exact local date and time."
-        alert.addButton(withTitle: "Save")
-        alert.addButton(withTitle: "Cancel")
-
-        let titleLabel = NSTextField(labelWithString: "Name")
-        let titleField = NSTextField(string: event?.title ?? "")
-        titleField.placeholderString = "Event name"
-        titleField.setContentHuggingPriority(.defaultLow, for: .horizontal)
-
-        let dateLabel = NSTextField(labelWithString: "Date and time")
-        let datePicker = NSDatePicker()
-        datePicker.datePickerStyle = .textFieldAndStepper
-        datePicker.datePickerElements = [.yearMonthDay, .hourMinuteSecond]
-        datePicker.dateValue = initialDate
-        datePicker.locale = Locale.current
-        datePicker.timeZone = TimeZone.current
-
-        let grid = NSGridView(views: [
-            [titleLabel, titleField],
-            [dateLabel, datePicker]
-        ])
-        grid.rowSpacing = 12
-        grid.columnSpacing = 12
-        grid.column(at: 0).xPlacement = .trailing
-        grid.translatesAutoresizingMaskIntoConstraints = false
-
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 430, height: 90))
-        container.addSubview(grid)
-        NSLayoutConstraint.activate([
-            grid.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            grid.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            grid.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            titleField.widthAnchor.constraint(greaterThanOrEqualToConstant: 270)
-        ])
-        alert.accessoryView = container
-        alert.window.initialFirstResponder = titleField
-
-        while alert.runModal() == .alertFirstButtonReturn {
-            let title = titleField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !title.isEmpty {
-                store.save(CountdownEvent(id: event?.id ?? UUID(), title: title, date: datePicker.dateValue))
-                refresh()
-                return
-            }
-            alert.informativeText = "Enter a name for the event."
+        let editor = EventEditor()
+        if let updatedEvent = editor.run(event: event, initialDate: initialDate) {
+            store.save(updatedEvent)
+            refresh()
         }
     }
 
@@ -175,11 +153,19 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.terminate(nil)
     }
 
-    private func fullDate(_ date: Date) -> String {
+    private func menuTitle(for event: CountdownEvent) -> String {
+        let calendar = EventTimeZone.calendar(in: event.timeZone)
+        let countdown = CountdownFormat.remaining(until: event.date, calendar: calendar)
+        return "\(event.title)  ·  \(fullDate(event))  ·  \(countdown)"
+    }
+
+    private func fullDate(_ event: CountdownEvent) -> String {
         let formatter = DateFormatter()
+        formatter.calendar = EventTimeZone.calendar(in: event.timeZone)
+        formatter.timeZone = event.timeZone
         formatter.dateStyle = .medium
         formatter.timeStyle = .medium
-        return formatter.string(from: date)
+        return "\(formatter.string(from: event.date)) \(EventTimeZone.label(event.timeZoneIdentifier, at: event.date))"
     }
 }
 

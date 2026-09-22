@@ -1,6 +1,23 @@
 import Foundation
 
 enum CountdownFormat {
+    static func compact(until target: Date, now: Date = Date()) -> String {
+        let remaining = target.timeIntervalSince(now)
+        guard remaining > 0 else { return "Done" }
+        let seconds = Int(remaining)
+        if remaining >= 7 * 86_400 {
+            return "\(seconds / 86_400)d"
+        }
+        if remaining >= 86_400 {
+            return "\(seconds / 86_400)d \((seconds % 86_400) / 3_600)h"
+        }
+        if remaining >= 3_600 {
+            return "\(seconds / 3_600)h \((seconds % 3_600) / 60)m"
+        }
+        let roundedSeconds = Int(ceil(remaining))
+        return "\(roundedSeconds / 60)m \(roundedSeconds % 60)s"
+    }
+
     static func remaining(until target: Date, now: Date = Date(), calendar: Calendar = .current) -> String {
         guard target > now else { return "Done" }
 
