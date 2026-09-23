@@ -4,6 +4,12 @@ A small macOS menu bar app for counting down to exact event dates and times.
 
 [Download the latest release](https://github.com/Kymer0615/mac_countdown/releases/latest)
 
+![Animated countdown: a green outlined moon gradually fills through yellow and orange to red as a Vacation deadline approaches, then becomes a checkmark.](docs/images/moon-progress.gif)
+
+**A glance is all it takes.** The moon fills as the deadline approaches, while the countdown moves from days to hours, minutes, and seconds.
+
+*Accelerated illustration using the app’s moon-drawing code. The app updates once per second; it does not continuously loop through phases. [View the still image](docs/images/moon-progress.png).*
+
 ## Install with Homebrew
 
 ```sh
@@ -22,6 +28,35 @@ brew upgrade --cask kymer0615/tap/countdown-menu-bar
 # Remove the app (saved events are retained):
 brew uninstall --cask countdown-menu-bar
 ```
+
+## See it in action
+
+### One countdown in your menu bar. Every event a click away.
+
+<img src="docs/images/menu-bar.png" alt="Menu bar showing Project launch with a partially filled moon and 3 days 8 hours remaining" width="242">
+
+<img src="docs/images/event-menu.png" alt="Open event dropdown listing seven sample events, exact deadlines, time zones, and countdowns, with Project launch selected" width="720">
+
+Choose an event to pin its countdown to the menu bar. Add, edit, and delete events from the same dropdown.
+
+### Your events, on your desktop
+
+<table>
+  <tr>
+    <td align="center" valign="top">
+      <strong>Small · one event</strong><br><br>
+      <img src="docs/images/widget-small.png" alt="Small widget showing Project launch and page 1 of 7" width="170"><br><br>
+      <strong>Medium · two events</strong><br><br>
+      <img src="docs/images/widget-medium.png" alt="Medium widget showing Project launch in UTC and Design review in AoE" width="360">
+    </td>
+    <td align="center" valign="top">
+      <strong>Large · six events</strong><br><br>
+      <img src="docs/images/widget-large.png" alt="Large widget showing six sample deadlines and page controls to browse the remaining events" width="360">
+    </td>
+  </tr>
+</table>
+
+*Menu screenshots and native widget view previews use sample events. Widget backgrounds can vary with your desktop settings. Every size has page arrows to browse the full event list.*
 
 ## Build and launch
 
