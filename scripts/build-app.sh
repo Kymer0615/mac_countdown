@@ -21,15 +21,18 @@ DEVELOPER_DIR="$countdown_developer_dir" xcodebuild \
     -derivedDataPath "$countdown_build_root/DerivedData" -quiet \
     CODE_SIGN_IDENTITY="${COUNTDOWN_SIGN_IDENTITY:--}" build
 
-app="$project_dir/dist/Countdown Menu Bar.app"
-mkdir -p "$project_dir/dist"
+countdown_output_dir="${COUNTDOWN_OUTPUT_DIR:-$project_dir/dist}"
+app="$countdown_output_dir/Countdown Menu Bar.app"
+mkdir -p "$countdown_output_dir"
 countdown_product="$countdown_build_root/DerivedData/Build/Products/Release/Countdown Menu Bar.app"
 ditto "$countdown_product" "$app"
 # Finder/file-provider metadata can be added while copying into Documents.
 xattr -dr com.apple.FinderInfo "$app" 2>/dev/null || true
 xattr -dr com.apple.ResourceFork "$app" 2>/dev/null || true
 codesign --verify --deep --strict "$app"
-countdown_lsregister=/System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister
-"$countdown_lsregister" -u "$countdown_product" || true
-"$countdown_lsregister" -f "$app"
+if [ "${COUNTDOWN_REGISTER_APP:-1}" = 1 ]; then
+    countdown_lsregister=/System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister
+    "$countdown_lsregister" -u "$countdown_product" || true
+    "$countdown_lsregister" -f "$app"
+fi
 echo "Built $app (includes Countdown Events widget)"

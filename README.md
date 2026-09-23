@@ -2,6 +2,27 @@
 
 A small macOS menu bar app for counting down to exact event dates and times.
 
+[Download the latest release](https://github.com/Kymer0615/mac_countdown/releases/latest)
+
+## Install with Homebrew
+
+```sh
+brew install --cask kymer0615/tap/countdown-menu-bar
+open "/Applications/Countdown Menu Bar.app"
+```
+
+Requires macOS 13 or later, on Apple Silicon or Intel. Desktop widgets require macOS 14 or later.
+The initial release is ad hoc signed and is not notarized by Apple. If macOS blocks the first launch, follow [Apple's instructions](https://support.apple.com/en-gb/102445) to allow it in **System Settings → Privacy & Security → Open Anyway**, then open it again.
+
+If you already installed a copy manually, quit it and move that app bundle out of Applications before installing through Homebrew. Your saved events are stored separately and are retained.
+
+```sh
+brew update
+brew upgrade --cask kymer0615/tap/countdown-menu-bar
+# Remove the app (saved events are retained):
+brew uninstall --cask countdown-menu-bar
+```
+
 ## Build and launch
 
 Requires Xcode to build the app and its native widget extension. The menu bar app runs on macOS 13 or later; desktop widgets require macOS 14 or later. From this folder:
@@ -19,10 +40,10 @@ The menu bar shows more detail as the deadline approaches:
 
 | Time remaining | Example |
 | --- | --- |
-| 7 days or more | CVPR2026 · 49d |
-| 1–7 days | CVPR2026 · 3d 8h |
-| 1–24 hours | CVPR2026 · 8h 24m |
-| Under 1 hour | CVPR2026 · 24m 16s |
+| 7 days or more | Vacation · 49d |
+| 1–7 days | Vacation · 3d 8h |
+| 1–24 hours | Vacation · 8h 24m |
+| Under 1 hour | Vacation · 24m 16s |
 
 These compact units use elapsed time (one day is 24 hours), rounding down except seconds, which round up. The dropdown retains calendar years, months, days, hours, minutes, and seconds.
 
@@ -52,6 +73,19 @@ The Xcode project is `Countdown.xcodeproj`, with the shared **Countdown** scheme
 
 Run `sh scripts/check.sh` to check the countdown date calculations.
 
-## App icon
+## Publishing a release
 
-The crescent countdown logo is stored in `Assets/AppIcon.png`, with a macOS icon bundle at `Assets/CountdownIcon.icns`. The Xcode app target includes this icon. To regenerate the icon sizes from the source PNG, run `sh scripts/build-icon.sh`. The generation prompt is recorded in `Assets/LogoPrompt.md`.
+1. Set matching versions and increment build numbers in both `Build` Info.plist files. Commit the release changes on a clean branch.
+2. Run `sh scripts/package-release.sh v1.1.0` (replace the version for future releases). This runs checks, builds both architectures, verifies signatures, and writes a ZIP and `.sha256` file to `dist/`. Existing archives are never overwritten.
+3. Authenticate with `gh auth login`, then tag the committed source and push the tag:
+
+   ```sh
+   git tag -a v1.1.0 -m "Countdown Menu Bar 1.1.0"
+   git push origin main v1.1.0
+   gh release create v1.1.0 dist/Countdown-Menu-Bar-1.1.0-universal.zip dist/Countdown-Menu-Bar-1.1.0-universal.zip.sha256 --verify-tag --title "Countdown Menu Bar 1.1.0" --notes-file dist/release-notes.md
+   ```
+
+   Write release notes to `dist/release-notes.md` first, including the signing limitation. The repository and release downloads must be public.
+4. In `Kymer0615/homebrew-tap`, update `Casks/countdown-menu-bar.rb` with the release version and archive SHA-256. Run `brew style --cask countdown-menu-bar` and `brew audit --cask countdown-menu-bar` with the tap installed, then commit and push.
+
+Published release assets must remain unchanged; fixes get a new version and tag. The packaging script skips local LaunchServices registration so preparing a release does not select it as the installed app.
