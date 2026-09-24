@@ -5,6 +5,15 @@
 	"objectVersion" = "56";
 	"archiveVersion" = "1";
 	"objects" = {
+		"272328DFAD98CEA8621341CE" = { "isa" = "PBXFileReference"; "path" = "Sources/CountdownMenuBar/Settings.swift"; "lastKnownFileType" = "sourcecode.swift"; "sourceTree" = "SOURCE_ROOT"; };
+		"3A4E9DD80CA6724FA873AC66" = { "isa" = "PBXBuildFile"; "fileRef" = "272328DFAD98CEA8621341CE"; };
+		"35192F495281D9985D8B64CC" = { "isa" = "PBXFileReference"; "path" = "Sources/CountdownMenuBar/CalendarIntegration.swift"; "lastKnownFileType" = "sourcecode.swift"; "sourceTree" = "SOURCE_ROOT"; };
+		"CF22B311DC37D53D172A1E15" = { "isa" = "PBXBuildFile"; "fileRef" = "35192F495281D9985D8B64CC"; };
+		"F7348BB29839014B0162C2CB" = { "isa" = "PBXFileReference"; "path" = "Sources/CountdownMenuBar/ManagementWindow.swift"; "lastKnownFileType" = "sourcecode.swift"; "sourceTree" = "SOURCE_ROOT"; };
+		"0460998AE55A358923CB2CEB" = { "isa" = "PBXBuildFile"; "fileRef" = "F7348BB29839014B0162C2CB"; };
+		"3238B8183AE7D276DF7C5619" = { "isa" = "PBXFileReference"; "path" = "Sources/CountdownMenuBar/CountdownIntents.swift"; "lastKnownFileType" = "sourcecode.swift"; "sourceTree" = "SOURCE_ROOT"; };
+		"C485595DA22953AAB6E982F2" = { "isa" = "PBXBuildFile"; "fileRef" = "3238B8183AE7D276DF7C5619"; };
+
 		"A9181351A1FEE60D4A78323F" = {
 			"isa" = "PBXTargetDependency";
 			"target" = "FAD79F600E79F84B420BD567";
@@ -139,6 +148,10 @@
 			"isa" = "PBXSourcesBuildPhase";
 			"buildActionMask" = "2147483647";
 			"files" = (
+				"3A4E9DD80CA6724FA873AC66",
+				"CF22B311DC37D53D172A1E15",
+				"0460998AE55A358923CB2CEB",
+				"C485595DA22953AAB6E982F2",
 				"7F1F506A5FA85EBD7EBA008B",
 				"F798EBFF4F2A8A324CA0CAF3",
 				"B48DC8205B5C4AE0996CBECF",
@@ -451,6 +464,10 @@
 			"isa" = "PBXGroup";
 			"name" = "Menu Bar App";
 			"children" = (
+				"272328DFAD98CEA8621341CE",
+				"35192F495281D9985D8B64CC",
+				"F7348BB29839014B0162C2CB",
+				"3238B8183AE7D276DF7C5619",
 				"E45C6A7F5BFFE00C4B3D9E5A",
 				"00BD074C83B95DBAA522236E",
 				"B2DC3E914EA2C4757AC543C1",

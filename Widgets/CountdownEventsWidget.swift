@@ -137,7 +137,7 @@ struct CountdownWidgetContent: View {
         VStack(alignment: .leading, spacing: 5) {
             Text(event.title).font(.subheadline.weight(.medium)).lineLimit(1)
             HStack(spacing: 7) {
-                WidgetMoon(progress: progress(event), completed: event.date <= entry.date).frame(width: 24, height: 24)
+                WidgetMoon(progress: progress(event), urgency: MoonProgress.urgency(for: event, now: entry.date), completed: event.date <= entry.date).frame(width: 24, height: 24)
                 countdown(event).font(.system(.title3, design: .rounded, weight: .semibold)).minimumScaleFactor(0.7)
             }
             Text(deadline(event)).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
@@ -146,7 +146,7 @@ struct CountdownWidgetContent: View {
 
     private func eventRow(_ event: CountdownEvent) -> some View {
         HStack(spacing: 9) {
-            WidgetMoon(progress: progress(event), completed: event.date <= entry.date).frame(width: 22, height: 22)
+            WidgetMoon(progress: progress(event), urgency: MoonProgress.urgency(for: event, now: entry.date), completed: event.date <= entry.date).frame(width: 22, height: 22)
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 8) {
                     Text(event.title).font(.subheadline.weight(.medium)).lineLimit(1)
@@ -197,7 +197,7 @@ struct CountdownWidgetContent: View {
     }
 
     private func progress(_ event: CountdownEvent) -> Double {
-        MoonProgress.value(remaining: event.date.timeIntervalSince(entry.date))
+        MoonProgress.value(for: event, now: entry.date)
     }
 
     private func deadline(_ event: CountdownEvent) -> String {
@@ -211,20 +211,21 @@ struct CountdownWidgetContent: View {
 
 struct WidgetMoon: View {
     let progress: Double
+    let urgency: Double
     let completed: Bool
 
     var body: some View {
         if completed {
             Image(systemName: "checkmark.circle").foregroundStyle(.secondary).accessibilityLabel("Deadline reached")
         } else {
-            let color = Color(hue: MoonProgress.hue(progress: progress), saturation: 0.88, brightness: 0.88)
+            let color = Color(hue: MoonProgress.hue(progress: urgency), saturation: 0.88, brightness: 0.88)
             ZStack {
                 Circle().fill(.primary.opacity(0.08))
                 MoonPhase(progress: progress).fill(color)
                 Circle().strokeBorder(color, lineWidth: 1)
             }
             .padding(1)
-            .accessibilityLabel("Deadline proximity \(Int(progress * 100)) percent")
+            .accessibilityLabel("Moon illuminated \(Int(progress * 100)) percent")
         }
     }
 }

@@ -4,9 +4,9 @@ A small macOS menu bar app for counting down to exact event dates and times.
 
 [Download the latest release](https://github.com/Kymer0615/mac_countdown/releases/latest)
 
-![Animated countdown: a green outlined moon gradually fills through yellow and orange to red as a Vacation deadline approaches, then becomes a checkmark.](docs/images/moon-progress.gif)
+![Animated countdown: a full green moon wanes from creation to the critical window, then fills toward red before becoming a checkmark.](docs/images/moon-progress.gif)
 
-**A glance is all it takes.** The moon fills as the deadline approaches, while the countdown moves from days to hours, minutes, and seconds.
+**A glance is all it takes.** The moon wanes from creation to your critical window, then fills toward the deadline. The countdown moves from days to hours, minutes, and seconds.
 
 *Accelerated illustration using the app’s moon-drawing code. The app updates once per second; it does not continuously loop through phases. [View the still image](docs/images/moon-progress.png).*
 
@@ -82,7 +82,11 @@ The menu bar shows more detail as the deadline approaches:
 
 These compact units use elapsed time (one day is 24 hours), rounding down except seconds, which round up. The dropdown retains calendar years, months, days, hours, minutes, and seconds.
 
-A custom moon fills from empty at 30 days to a quarter at 7 days, half at 24 hours, three-quarters at 1 hour, and full at the deadline. Its color moves from green through yellow and orange to red. Phase and color transitions animate briefly, without repeating motion; macOS Reduce Motion disables the transitions. A checkmark appears when the deadline is reached.
+The moon starts **full when you create an event** and wanes to empty as its critical window approaches. Inside that window it fills again toward the deadline. Color expresses urgency independently: green → yellow at the critical threshold → red at the deadline. A checkmark appears when the deadline is reached.
+
+Set **Critical window (hours)** in each event’s editor, from 0.1 to 8760 hours; the default is **24 hours**. A 60-day event therefore visibly wanes throughout its first 59 days. Events created inside their critical window start in the final filling phase. Editing an event preserves its creation time; changing its deadline or threshold recalculates its phase. Existing events begin this lifecycle when first opened in version 1.2, without changing their deadlines.
+
+Phase changes animate briefly, without repeating motion; macOS Reduce Motion disables these transitions. The menu bar and widgets use the same lifecycle.
 
 ## Time zones
 
@@ -93,6 +97,35 @@ Changing a zone keeps the entered date and clock time and reinterprets the deadl
 Named zones follow daylight saving rules. Nonexistent clock times are rejected; when a time occurs twice, the first occurrence is used and the editor explains the chosen offset. Existing events retain their exact deadlines and receive the current local zone when first loaded by this version.
 
 Events and the selected event are saved locally in macOS UserDefaults. A finished event displays **Done** and stays in the list until you delete it.
+
+## Events and settings window
+
+<img src="docs/images/events-window.png" alt="Events window with sample countdowns, pin buttons, edit controls, and a Settings tab" width="760">
+
+Choose **Events & Settings…** in the menu bar dropdown. The Events tab lets you add, edit, delete, and pin countdowns. The Settings tab offers:
+
+- **Start at login**, using macOS Login Items. If approval is needed, the app links to System Settings.
+- **Font style:** System, Rounded, Serif, or Monospaced.
+- **Font size:** 10–22 pt for the menu bar and events window. Widgets retain their system-sized layout.
+
+<img src="docs/images/settings-window.png" alt="Settings showing Start at login, font style and size controls, and moon phase behavior" width="760">
+
+Keep the app in Applications before enabling login startup. Settings are saved locally.
+
+## Calendar and Reminders
+
+When adding an event, optionally select **Add to Calendar** and/or **Add to Reminders**. Both are off by default. macOS requests permission only for the services you choose.
+
+- Calendar creates a 30-minute event starting at the deadline in your default calendar.
+- Reminders creates a reminder due at the exact deadline in your default reminder list.
+- Both include a link back to the countdown. These are independent copies; later edits and deletions are not synchronized.
+- If access is denied or a default calendar/list is unavailable, the countdown remains saved and the app reports the unsuccessful addition.
+
+## Siri and Shortcuts
+
+Open the app once, then find **Create Countdown** under Countdown Menu Bar in Shortcuts. Supply an event name and deadline; optionally enable Calendar, Reminders, and a custom critical window. The deadline is an absolute date/time; its display uses your local time zone.
+
+Say **“Create a countdown in Countdown Menu Bar”** to Siri, or make a named shortcut with your preferred options and invoke that shortcut through Siri. The action integrates through Apple App Intents, including on Macs using Apple Intelligence Siri. Voice recognition and action availability depend on the macOS version, language, Siri configuration, and system indexing; this app does not provide its own AI assistant.
 
 ## Native desktop widget
 
@@ -106,18 +139,18 @@ Events come directly from the app's saved list, including their individual time 
 
 The Xcode project is `Countdown.xcodeproj`, with the shared **Countdown** scheme. The build script signs both targets for local use and embeds the widget inside the app. The widget has read-only sandbox access to the app's preference domain; it cannot edit event data. Page selection is stored separately in the widget's own preferences. For an App Store release, replace the temporary shared-preference entitlement with a provisioned App Group.
 
-Run `sh scripts/check.sh` to check the countdown date calculations.
+Run `sh scripts/check.sh` for date, migration, moon-lifecycle, and widget checks. Run `sh scripts/check-app.sh` in a macOS GUI session for editor, font persistence, and App Intent checks; it uses isolated sample data and does not create Calendar/Reminders items or change login settings.
 
 ## Publishing a release
 
 1. Set matching versions and increment build numbers in both `Build` Info.plist files. Commit the release changes on a clean branch.
-2. Run `sh scripts/package-release.sh v1.1.0` (replace the version for future releases). This runs checks, builds both architectures, verifies signatures, and writes a ZIP and `.sha256` file to `dist/`. Existing archives are never overwritten.
+2. Run `sh scripts/package-release.sh v1.2.0` (replace the version for future releases). This runs checks, builds both architectures, verifies signatures, and writes a ZIP and `.sha256` file to `dist/`. Existing archives are never overwritten.
 3. Authenticate with `gh auth login`, then tag the committed source and push the tag:
 
    ```sh
-   git tag -a v1.1.0 -m "Countdown Menu Bar 1.1.0"
-   git push origin main v1.1.0
-   gh release create v1.1.0 dist/Countdown-Menu-Bar-1.1.0-universal.zip dist/Countdown-Menu-Bar-1.1.0-universal.zip.sha256 --verify-tag --title "Countdown Menu Bar 1.1.0" --notes-file dist/release-notes.md
+   git tag -a v1.2.0 -m "Countdown Menu Bar 1.2.0"
+   git push origin main v1.2.0
+   gh release create v1.2.0 dist/Countdown-Menu-Bar-1.2.0-universal.zip dist/Countdown-Menu-Bar-1.2.0-universal.zip.sha256 --verify-tag --title "Countdown Menu Bar 1.2.0" --notes-file dist/release-notes.md
    ```
 
    Write release notes to `dist/release-notes.md` first, including the signing limitation. The repository and release downloads must be public.

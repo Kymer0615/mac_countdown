@@ -1,7 +1,7 @@
 import AppKit
 
 enum MoonIcon {
-    static func image(progress: Double) -> NSImage {
+    static func image(progress: Double, urgency: Double? = nil) -> NSImage {
         let fill = min(1, max(0, progress))
         let image = NSImage(size: NSSize(width: 20, height: 20), flipped: false) { _ in
             let center = NSPoint(x: 10, y: 10)
@@ -11,7 +11,7 @@ enum MoonIcon {
             circle.fill()
 
             let color = NSColor(
-                calibratedHue: MoonProgress.hue(progress: fill),
+                calibratedHue: MoonProgress.hue(progress: urgency ?? fill),
                 saturation: 0.88, brightness: 0.88, alpha: 1
             )
             let phase = NSBezierPath()
@@ -43,7 +43,7 @@ enum MoonIcon {
             return true
         }
         image.isTemplate = false
-        image.accessibilityDescription = "Deadline proximity \(Int(fill * 100)) percent"
+        image.accessibilityDescription = "Moon illuminated \(Int(fill * 100)) percent"
         return image
     }
 }
@@ -55,6 +55,7 @@ final class MoonAnimator: NSObject {
     private var current: Double?
     private var start: Double = 0
     private var target: Double = 0
+    private var urgency: Double = 0
     private var startedAt: TimeInterval = 0
 
     init(button: NSStatusBarButton?) {
@@ -62,7 +63,8 @@ final class MoonAnimator: NSObject {
         super.init()
     }
 
-    func update(progress: Double, completed: Bool) {
+    func update(progress: Double, completed: Bool, urgency: Double? = nil) {
+        self.urgency = urgency ?? progress
         if completed {
             reset()
             button?.image = NSImage(systemSymbolName: "checkmark.circle", accessibilityDescription: "Deadline reached")
@@ -71,7 +73,7 @@ final class MoonAnimator: NSObject {
         guard current != nil else {
             current = progress
             target = progress
-            button?.image = MoonIcon.image(progress: progress)
+            button?.image = MoonIcon.image(progress: progress, urgency: self.urgency)
             return
         }
         if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
@@ -79,10 +81,13 @@ final class MoonAnimator: NSObject {
             timer = nil
             current = progress
             target = progress
-            button?.image = MoonIcon.image(progress: progress)
+            button?.image = MoonIcon.image(progress: progress, urgency: self.urgency)
             return
         }
-        guard target != progress else { return }
+        guard target != progress else {
+            button?.image = MoonIcon.image(progress: progress, urgency: self.urgency)
+            return
+        }
         timer?.invalidate()
         start = current!
         target = progress
@@ -104,7 +109,7 @@ final class MoonAnimator: NSObject {
         let eased = fraction * fraction * (3 - 2 * fraction)
         let value = start + (target - start) * eased
         current = value
-        button?.image = MoonIcon.image(progress: value)
+        button?.image = MoonIcon.image(progress: value, urgency: urgency)
         if fraction >= 1 {
             timer?.invalidate()
             timer = nil

@@ -4,6 +4,9 @@ import WidgetKit
 @MainActor
 final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let store = EventStore()
+    private let settings = CountdownSettings()
+    private let integration = CalendarIntegration()
+    private lazy var management = ManagementWindow(store: store, settings: settings, add: { [weak self] in self?.addEvent() }, edit: { [weak self] event in self?.presentEditor(event: event, initialDate: event.date) })
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let menu = NSMenu()
     private var timer: Timer?
@@ -11,7 +14,12 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-        store.onEventsChanged = { WidgetCenter.shared.reloadTimelines(ofKind: WidgetEventData.kind) }
+        store.onEventsChanged = { [weak self] in
+            WidgetCenter.shared.reloadTimelines(ofKind: WidgetEventData.kind)
+            self?.refresh()
+        }
+        settings.onChange = { [weak self] in self?.refresh() }
+        CountdownShortcuts.updateAppShortcutParameters()
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetEventData.kind)
         menu.delegate = self
         menu.autoenablesItems = false
@@ -29,6 +37,8 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func application(_ application: NSApplication, open urls: [URL]) {
         guard let url = urls.first, url.scheme == "countdownmenubar" else { return }
+        if url.host == "settings" { management.show(settingsTab: true); return }
+        if url.host == "manage" { showManagement(); return }
         if url.host == "add" {
             addEvent()
             return
@@ -42,12 +52,13 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func refresh() {
         let now = Date()
+        statusItem.button?.font = settings.appKitFont
         if let event = store.selectedEvent {
             let remaining = event.date.timeIntervalSince(now)
             statusItem.button?.title = "\(event.title) · \(CountdownFormat.compact(until: event.date, now: now))"
             statusItem.button?.toolTip = "\(event.title) — \(fullDate(event))"
             statusItem.button?.setAccessibilityLabel("\(event.title), \(CountdownFormat.remaining(until: event.date, now: now)). \(fullDate(event))")
-            moonAnimator.update(progress: MoonProgress.value(remaining: remaining), completed: remaining <= 0)
+            moonAnimator.update(progress: MoonProgress.value(for: event, now: now), completed: remaining <= 0, urgency: MoonProgress.urgency(for: event, now: now))
         } else {
             moonAnimator.reset()
             statusItem.button?.title = "⏳ Add event"
@@ -92,6 +103,7 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         menu.addItem(.separator())
+        addAction("Events & Settings…", #selector(showManagement), key: ",")
         addAction("Add Event…", #selector(addEvent), key: "n")
         let edit = addAction("Edit Selected Event…", #selector(editEvent), key: "e")
         edit.isEnabled = store.selectedEvent != nil
@@ -131,6 +143,16 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if let updatedEvent = editor.run(event: event, initialDate: initialDate) {
             store.save(updatedEvent)
             refresh()
+            if event == nil && (editor.addToCalendar || editor.addToReminders) {
+                Task {
+                    let results = await integration.add(updatedEvent, calendar: editor.addToCalendar, reminder: editor.addToReminders)
+                    let alert = NSAlert()
+                    alert.messageText = "Countdown saved"
+                    alert.informativeText = results.joined(separator: "\n")
+                    NSApp.activate(ignoringOtherApps: true)
+                    alert.runModal()
+                }
+            }
         }
     }
 
@@ -147,6 +169,21 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
             store.deleteSelected()
             refresh()
         }
+    }
+
+    @objc private func showManagement() { management.show() }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        management.show()
+        return true
+    }
+
+    func createCountdown(title: String, deadline: Date, zone: String, criticalHours: Double, calendar: Bool, reminder: Bool) async -> String {
+        let event = CountdownEvent(title: title, date: deadline, timeZoneIdentifier: zone, criticalHours: criticalHours)
+        store.save(event)
+        management.show()
+        let results = await integration.add(event, calendar: calendar, reminder: reminder)
+        return (["Created \(title)."] + results).joined(separator: " ")
     }
 
     @objc private func quit() {

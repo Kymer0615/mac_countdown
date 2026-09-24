@@ -6,6 +6,11 @@ final class EventEditor: NSObject, NSComboBoxDataSource, NSComboBoxDelegate {
     private let titleField = NSTextField()
     private let datePicker = NSDatePicker()
     private let zoneBox = NSComboBox()
+    private let calendarCheck = NSButton(checkboxWithTitle: "Add to Calendar (30-minute event)", target: nil, action: nil)
+    private let reminderCheck = NSButton(checkboxWithTitle: "Add to Reminders", target: nil, action: nil)
+    var addToCalendar: Bool { calendarCheck.state == .on }
+    var addToReminders: Bool { reminderCheck.state == .on }
+    private let criticalField = NSTextField(string: "24")
     private let preview = NSTextField(wrappingLabelWithString: "")
     private let localIdentifier = TimeZone.current.identifier
     private var allZones: [String] = []
@@ -42,14 +47,17 @@ final class EventEditor: NSObject, NSComboBoxDataSource, NSComboBoxDelegate {
         let grid = NSGridView(views: [
             [NSTextField(labelWithString: "Name"), titleField],
             [NSTextField(labelWithString: "Date and time"), datePicker],
-            [NSTextField(labelWithString: "Time zone"), zoneBox]
+            [NSTextField(labelWithString: "Time zone"), zoneBox],
+            [NSTextField(labelWithString: "Critical window (hours)"), criticalField],
+            [NSTextField(labelWithString: "Also create"), calendarCheck],
+            [NSTextField(labelWithString: ""), reminderCheck]
         ])
         grid.rowSpacing = 12
         grid.columnSpacing = 12
         grid.column(at: 0).xPlacement = .trailing
         grid.translatesAutoresizingMaskIntoConstraints = false
         preview.translatesAutoresizingMaskIntoConstraints = false
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 520, height: 165))
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 520, height: 280))
         container.addSubview(grid)
         container.addSubview(preview)
         NSLayoutConstraint.activate([
@@ -72,11 +80,14 @@ final class EventEditor: NSObject, NSComboBoxDataSource, NSComboBoxDelegate {
         alert.messageText = event == nil ? "Add Event" : "Edit Event"
         alert.informativeText = "Enter the deadline in its time zone. Changing zones keeps the entered clock time."
         titleField.stringValue = event?.title ?? ""
+        criticalField.stringValue = String(event?.criticalHours ?? 24)
         let identifier = event?.timeZoneIdentifier ?? localIdentifier
         zoneBox.stringValue = event == nil ? allZones[0] : (identifier == EventTimeZone.aoeIdentifier ? "AoE (UTC−12)" : identifier)
         datePicker.dateValue = EventTimeZone.pickerDate(
             for: initialDate, in: EventTimeZone.resolve(identifier) ?? .current
         )
+        calendarCheck.isEnabled = event == nil
+        reminderCheck.isEnabled = event == nil
         updatePreview()
 
         while alert.runModal() == .alertFirstButtonReturn {
@@ -95,9 +106,14 @@ final class EventEditor: NSObject, NSComboBoxDataSource, NSComboBoxDelegate {
                 showError("This local time does not exist because the clocks change. Choose a different time.")
                 continue
             }
+            guard let critical = Double(criticalField.stringValue), critical.isFinite, (0.1...8760).contains(critical) else {
+                showError("Critical window must be between 0.1 and 8760 hours.")
+                continue
+            }
             return CountdownEvent(
                 id: event?.id ?? UUID(), title: title, date: resolution.date,
-                timeZoneIdentifier: identifier
+                timeZoneIdentifier: identifier, createdAt: event?.createdAt ?? Date(),
+                criticalHours: critical
             )
         }
         return nil

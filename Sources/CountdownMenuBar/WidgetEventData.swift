@@ -36,7 +36,7 @@ enum WidgetEventData {
         let end = now.addingTimeInterval(3_600)
         var dates = Set((0...60).map { now.addingTimeInterval(Double($0) * 60) })
         for event in events {
-            for threshold: TimeInterval in [7 * 86_400, 86_400, 3_600, 0] {
+            for threshold: TimeInterval in [7 * 86_400, 86_400, 3_600, event.criticalHours * 3600, 0] {
                 let boundary = event.date.addingTimeInterval(-threshold)
                 if boundary > now && boundary <= end {
                     dates.insert(boundary)

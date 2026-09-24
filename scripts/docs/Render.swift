@@ -84,6 +84,20 @@ struct DocumentationCapture {
         }
         RunLoop.main.add(timer, forMode: .common)
         status.button?.performClick(nil)
+        delegate.application(NSApp, open: [URL(string: "countdownmenubar://manage")!])
+        RunLoop.main.run(until: Date().addingTimeInterval(0.5))
+        let manager = NSApp.windows.first { $0.isVisible && $0.title == "Countdown Menu Bar" }!
+        for (name, settingsTab) in [("events-window", false), ("settings-window", true)] {
+            if settingsTab { delegate.application(NSApp, open: [URL(string: "countdownmenubar://settings")!]) }
+            RunLoop.main.run(until: Date().addingTimeInterval(0.5))
+            let capture = Process()
+            capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+            capture.arguments = ["-x", "-o", "-l", "\(manager.windowNumber)", "docs/images/\(name).png"]
+            try capture.run()
+            capture.waitUntilExit()
+            precondition(capture.terminationStatus == 0)
+        }
+        manager.orderOut(nil)
         withExtendedLifetime(delegate) {}
     }
 }

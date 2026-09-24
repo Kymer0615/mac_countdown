@@ -1,23 +1,23 @@
 import Foundation
 
 enum MoonProgress {
-    /// Proximity anchors, independent of when the event was created.
-    static func value(remaining: TimeInterval) -> Double {
-        let anchors: [(TimeInterval, Double)] = [
-            (30 * 86_400, 0), (7 * 86_400, 0.25),
-            (86_400, 0.5), (3_600, 0.75), (0, 1)
-        ]
-        if remaining >= anchors[0].0 { return 0 }
+    /// Wane from creation to the critical window, then wax toward the deadline.
+    static func value(for event: CountdownEvent, now: Date) -> Double {
+        let remaining = event.date.timeIntervalSince(now)
         if remaining <= 0 { return 1 }
-        for index in 0..<(anchors.count - 1) {
-            let (start, startFill) = anchors[index]
-            let (end, endFill) = anchors[index + 1]
-            if remaining >= end {
-                let fraction = (start - remaining) / (start - end)
-                return startFill + fraction * (endFill - startFill)
-            }
-        }
-        return 1
+        let critical = CountdownEvent.validCriticalHours(event.criticalHours) * 3600
+        if remaining <= critical { return min(1, max(0, 1 - remaining / critical)) }
+        let span = event.date.timeIntervalSince(event.createdAt) - critical
+        guard span > 0 else { return 1 }
+        return min(1, max(0, (remaining - critical) / span))
+    }
+
+    /// Color expresses urgency independently of the waxing/waning geometry.
+    static func urgency(for event: CountdownEvent, now: Date) -> Double {
+        let remaining = event.date.timeIntervalSince(now)
+        let critical = CountdownEvent.validCriticalHours(event.criticalHours) * 3600
+        if remaining <= critical { return 0.5 + 0.5 * min(1, max(0, 1 - remaining / critical)) }
+        return 0.5 * (1 - value(for: event, now: now))
     }
 
     static func hue(progress: Double) -> Double {

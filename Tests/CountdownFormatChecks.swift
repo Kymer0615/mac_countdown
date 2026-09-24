@@ -29,14 +29,27 @@ struct CountdownFormatChecks {
         }
         print("Progressive precision and calendar countdown checks passed")
 
-        for (remaining, expected) in [(40 * day, 0.0), (30 * day, 0), (7 * day, 0.25), (day, 0.5), (3_600.0, 0.75), (0, 1), (-1, 1)] {
-            precondition(MoonProgress.value(remaining: remaining) == expected)
-        }
-        precondition(abs(MoonProgress.value(remaining: 18.5 * day) - 0.125) < 0.000001)
-        precondition(MoonProgress.hue(progress: 0) == 1.0 / 3)
-        precondition(MoonProgress.hue(progress: 0.5) == 1.0 / 6)
-        precondition(MoonProgress.hue(progress: 1) == 0)
-        print("Moon phase and color checks passed")
+        let creation = Date(timeIntervalSince1970: 100000)
+        let lifetime = CountdownEvent(title: "60-day event", date: creation.addingTimeInterval(60 * day), createdAt: creation)
+        precondition(MoonProgress.value(for: lifetime, now: creation) == 1)
+        precondition(abs(MoonProgress.value(for: lifetime, now: creation.addingTimeInterval(29.5 * day)) - 0.5) < 0.000001)
+        precondition(MoonProgress.value(for: lifetime, now: lifetime.date.addingTimeInterval(-day)) == 0)
+        precondition(MoonProgress.value(for: lifetime, now: lifetime.date.addingTimeInterval(-day / 2)) == 0.5)
+        precondition(MoonProgress.value(for: lifetime, now: lifetime.date) == 1)
+        precondition(MoonProgress.value(for: lifetime, now: creation.addingTimeInterval(-day)) == 1)
+        var custom = lifetime
+        custom.criticalHours = 48
+        precondition(MoonProgress.value(for: custom, now: custom.date.addingTimeInterval(-2 * day)) == 0)
+        precondition(MoonProgress.value(for: custom, now: custom.date.addingTimeInterval(-day)) == 0.5)
+        let short = CountdownEvent(title: "Short", date: creation.addingTimeInterval(3600), createdAt: creation)
+        precondition(MoonProgress.value(for: short, now: creation) > 0.95)
+        let urgencies = (0...120).map { MoonProgress.urgency(for: lifetime, now: creation.addingTimeInterval(Double($0) * day / 2)) }
+        precondition(urgencies == urgencies.sorted(), "Urgency color must never reverse while the moon wanes")
+        precondition(urgencies.first == 0 && urgencies.last == 1)
+        precondition(CountdownEvent.validCriticalHours(.nan) == 24)
+        precondition(CountdownEvent.validCriticalHours(-1) == 0.1)
+        precondition(CountdownEvent.validCriticalHours(100000) == 8760)
+        print("Creation-based moon, critical threshold, and monotonic urgency checks passed")
 
         let iso = ISO8601DateFormatter()
         func date(_ value: String) -> Date { iso.date(from: value)! }
@@ -70,6 +83,20 @@ struct CountdownFormatChecks {
         let migrated = try decoder.decode(CountdownEvent.self, from: JSONEncoder().encode(legacy))
         precondition(migrated.id == legacy.id && migrated.date == legacy.date)
         precondition(migrated.timeZoneIdentifier == TimeZone.current.identifier)
+        precondition(migrated.criticalHours == 24 && migrated.createdAt <= migrated.date)
+        let suite = "countdown.tests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set(try JSONEncoder().encode([legacy]), forKey: "countdown.events")
+        let migratedStore = EventStore(defaults: defaults)
+        let savedCreation = migratedStore.events[0].createdAt
+        precondition(EventStore(defaults: defaults).events[0].createdAt == savedCreation)
+        var changed = migratedStore.events[0]
+        changed.title = "Edited"
+        changed.criticalHours = 48
+        migratedStore.save(changed)
+        precondition(EventStore(defaults: defaults).events[0].createdAt == savedCreation)
+        precondition(EventStore(defaults: defaults).events[0].criticalHours == 48)
         let event = CountdownEvent(title: "AoE deadline", date: aoeDate, timeZoneIdentifier: "AoE")
         let restored = try decoder.decode(CountdownEvent.self, from: JSONEncoder().encode(event))
         precondition(restored == event)
