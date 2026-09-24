@@ -7,7 +7,7 @@ func renderMoonAnimation() throws {
     let width = 1000, height = 340
     let output = URL(fileURLWithPath: "docs/images/moon-progress.gif")
     let stages: [(Double, String)] = [
-        (60 * 86400, "Just created"), (30 * 86400, "Waning moon"),
+        (60 * 86400, "Start"), (30 * 86400, "Waning moon"),
         (7 * 86400, "One week away"),
         (3 * 86400 + 8 * 3600, "Days away"), (86400, "Critical window"),
         (8 * 3600 + 24 * 60, "Hours away"), (3600, "One hour away"),
@@ -48,7 +48,7 @@ func renderMoonAnimation() throws {
         for (i, seconds) in ([60 * 86400, 30 * 86400, 86400, 12 * 3600, 1] as [Double]).enumerated() {
             let x = CGFloat(64 + i * 204)
             MoonIcon.image(progress: MoonProgress.value(for: event, now: event.date.addingTimeInterval(-seconds)), urgency: MoonProgress.urgency(for: event, now: event.date.addingTimeInterval(-seconds))).draw(in: NSRect(x: x, y: 54, width: 24, height: 24))
-            text(["Created", "30 days", "24 hours", "12 hours", "Deadline"][i], x + 34, 57, 15, NSColor(white: 0.75, alpha: 1))
+            text(["Start", "30 days", "24 hours", "12 hours", "Deadline"][i], x + 34, 57, 15, NSColor(white: 0.75, alpha: 1))
         }
         text("Accelerated illustration · the app updates once per second", 40, 19, 13, NSColor(white: 0.48, alpha: 1))
         NSGraphicsContext.restoreGraphicsState()

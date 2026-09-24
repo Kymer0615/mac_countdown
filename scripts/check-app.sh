@@ -10,6 +10,8 @@ DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}" xcr
   Sources/CountdownMenuBar/MoonProgress.swift Sources/CountdownMenuBar/WidgetEventData.swift \
   Sources/CountdownMenuBar/Settings.swift Sources/CountdownMenuBar/ManagementWindow.swift \
   Sources/CountdownMenuBar/CalendarIntegration.swift Sources/CountdownMenuBar/CountdownIntents.swift \
-  Sources/CountdownMenuBar/EventEditor.swift .build/checks/AppWithoutMain.swift \
+  Sources/CountdownMenuBar/EventEditor.swift Sources/CountdownMenuBar/CriticalWindow.swift \
+  Sources/CountdownMenuBar/EventKitAdapter.swift Sources/CountdownMenuBar/CalendarSync.swift \
+  Sources/CountdownMenuBar/SyncView.swift .build/checks/AppWithoutMain.swift \
   Tests/AppFeatureChecks.swift -o .build/checks/AppFeatureChecks
 .build/checks/AppFeatureChecks

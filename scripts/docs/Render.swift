@@ -8,6 +8,7 @@ struct DocumentationCapture {
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
         app.appearance = NSAppearance(named: .darkAqua)
+        app.applicationIconImage = NSImage(contentsOfFile: "Assets/AppIcon.png")
         try renderMoonAnimation()
         let now = Date()
         let events = [
@@ -52,7 +53,8 @@ struct DocumentationCapture {
             try bitmap.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: "docs/images/widget-\(name).png"))
             window.close()
         }
-        let delegate = CountdownApp()
+        // No permission setup or sync: captures never read Calendar or Reminders.
+        let delegate = CountdownApp(runsSetup: false)
         delegate.applicationDidFinishLaunching(Notification(name: NSApplication.didFinishLaunchingNotification))
         let status = Mirror(reflecting: delegate).children.first { $0.label == "statusItem" }!.value as! NSStatusItem
         RunLoop.main.run(until: Date().addingTimeInterval(0.5))
@@ -87,8 +89,8 @@ struct DocumentationCapture {
         delegate.application(NSApp, open: [URL(string: "countdownmenubar://manage")!])
         RunLoop.main.run(until: Date().addingTimeInterval(0.5))
         let manager = NSApp.windows.first { $0.isVisible && $0.title == "Countdown Menu Bar" }!
-        for (name, settingsTab) in [("events-window", false), ("settings-window", true)] {
-            if settingsTab { delegate.application(NSApp, open: [URL(string: "countdownmenubar://settings")!]) }
+        for (name, tab) in [("events-window", "manage"), ("settings-window", "settings")] {
+            delegate.application(NSApp, open: [URL(string: "countdownmenubar://\(tab)")!])
             RunLoop.main.run(until: Date().addingTimeInterval(0.5))
             let capture = Process()
             capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")

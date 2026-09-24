@@ -5,6 +5,15 @@
 	"objectVersion" = "56";
 	"archiveVersion" = "1";
 	"objects" = {
+		"8FA11C2A67081E59C937E8E9" = { "isa" = "PBXFileReference"; "path" = "Sources/CountdownMenuBar/CriticalWindow.swift"; "lastKnownFileType" = "sourcecode.swift"; "sourceTree" = "SOURCE_ROOT"; };
+		"2162AC13BAA799C5EC32309A" = { "isa" = "PBXBuildFile"; "fileRef" = "8FA11C2A67081E59C937E8E9"; };
+		"21D7383FBA96C35D5836EE23" = { "isa" = "PBXBuildFile"; "fileRef" = "8FA11C2A67081E59C937E8E9"; };
+		"106F3DA47D23850FE5DB006B" = { "isa" = "PBXFileReference"; "path" = "Sources/CountdownMenuBar/EventKitAdapter.swift"; "lastKnownFileType" = "sourcecode.swift"; "sourceTree" = "SOURCE_ROOT"; };
+		"6D2D113B3DE87A4CE68E2977" = { "isa" = "PBXBuildFile"; "fileRef" = "106F3DA47D23850FE5DB006B"; };
+		"99809D926489FCDC16863C2C" = { "isa" = "PBXFileReference"; "path" = "Sources/CountdownMenuBar/CalendarSync.swift"; "lastKnownFileType" = "sourcecode.swift"; "sourceTree" = "SOURCE_ROOT"; };
+		"FAB6395384617696A4B044E7" = { "isa" = "PBXBuildFile"; "fileRef" = "99809D926489FCDC16863C2C"; };
+		"48447C5FFB9447ED5693EA60" = { "isa" = "PBXFileReference"; "path" = "Sources/CountdownMenuBar/SyncView.swift"; "lastKnownFileType" = "sourcecode.swift"; "sourceTree" = "SOURCE_ROOT"; };
+		"6A607D1182E3BD7C3E3FD127" = { "isa" = "PBXBuildFile"; "fileRef" = "48447C5FFB9447ED5693EA60"; };
 		"272328DFAD98CEA8621341CE" = { "isa" = "PBXFileReference"; "path" = "Sources/CountdownMenuBar/Settings.swift"; "lastKnownFileType" = "sourcecode.swift"; "sourceTree" = "SOURCE_ROOT"; };
 		"3A4E9DD80CA6724FA873AC66" = { "isa" = "PBXBuildFile"; "fileRef" = "272328DFAD98CEA8621341CE"; };
 		"35192F495281D9985D8B64CC" = { "isa" = "PBXFileReference"; "path" = "Sources/CountdownMenuBar/CalendarIntegration.swift"; "lastKnownFileType" = "sourcecode.swift"; "sourceTree" = "SOURCE_ROOT"; };
@@ -52,6 +61,7 @@
 				"F49F69DAFA89FBDE7BC13710",
 				"D140AC0E575561F7203AEC89",
 				"F2A726FCE0983D681651C7F3",
+				"21D7383FBA96C35D5836EE23",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
@@ -160,6 +170,10 @@
 				"206E8912C3EBED98E8D1169F",
 				"FB4011A5DE7911E2D02DC8CB",
 				"3738099ACE4D387EEC52AEF1",
+				"2162AC13BAA799C5EC32309A",
+				"6D2D113B3DE87A4CE68E2977",
+				"FAB6395384617696A4B044E7",
+				"6A607D1182E3BD7C3E3FD127",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
@@ -476,6 +490,10 @@
 				"072C269C96C3F60CF995466F",
 				"203505F98E4D7FD47D25D2F7",
 				"45F95B446D1891AFBCE153B5",
+				"8FA11C2A67081E59C937E8E9",
+				"106F3DA47D23850FE5DB006B",
+				"99809D926489FCDC16863C2C",
+				"48447C5FFB9447ED5693EA60",
 			);
 			"sourceTree" = "<group>";
 		};

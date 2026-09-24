@@ -1,6 +1,16 @@
 import Foundation
 
 enum CountdownFormat {
+    /// Uses the shared completion predicate, so a completed source reminder
+    /// shows Done without changing its stored deadline.
+    static func compact(for event: CountdownEvent, now: Date = Date()) -> String {
+        event.isCompleted(at: now) ? "Done" : compact(until: event.date, now: now)
+    }
+
+    static func remaining(for event: CountdownEvent, now: Date = Date()) -> String {
+        event.isCompleted(at: now) ? "Done" : remaining(until: event.date, now: now, calendar: EventTimeZone.calendar(in: event.timeZone))
+    }
+
     static func compact(until target: Date, now: Date = Date()) -> String {
         let remaining = target.timeIntervalSince(now)
         guard remaining > 0 else { return "Done" }

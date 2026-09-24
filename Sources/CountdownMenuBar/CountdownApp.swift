@@ -3,14 +3,35 @@ import WidgetKit
 
 @MainActor
 final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
-    private let store = EventStore()
-    private let settings = CountdownSettings()
-    private let integration = CalendarIntegration()
-    private lazy var management = ManagementWindow(store: store, settings: settings, add: { [weak self] in self?.addEvent() }, edit: { [weak self] event in self?.presentEditor(event: event, initialDate: event.date) })
+    private let store: EventStore
+    private let settings: CountdownSettings
+    private let access: IntegrationAccess
+    private let integration: CalendarIntegration
+    private let sync: CalendarSync
+    private let runsSetup: Bool
+    private lazy var management = ManagementWindow(
+        store: store, settings: settings, access: access, sync: sync,
+        add: { [weak self] in self?.addEvent() },
+        edit: { [weak self] event in self?.presentEditor(event: event, initialDate: event.date) },
+        delete: { [weak self] event in self?.remove(event) }
+    )
+    private var editors: [EventEditorWindow] = []
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let menu = NSMenu()
     private var timer: Timer?
     private lazy var moonAnimator = MoonAnimator(button: statusItem.button)
+
+    /// Tests and documentation renderers inject an adapter and skip the
+    /// interactive permission setup so they never prompt.
+    init(defaults: UserDefaults = .standard, adapter: EventKitAdapter? = nil, runsSetup: Bool = true) {
+        store = EventStore(defaults: defaults)
+        settings = CountdownSettings(defaults: defaults)
+        access = IntegrationAccess(adapter: adapter ?? LiveEventKitAdapter(), defaults: defaults)
+        integration = CalendarIntegration(access: access, store: store)
+        sync = CalendarSync(access: access, store: store, defaults: defaults)
+        self.runsSetup = runsSetup
+        super.init()
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -29,6 +50,26 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         timer = Timer(timeInterval: 1, target: self, selector: #selector(refresh), userInfo: nil, repeats: true)
         timer?.tolerance = 0.1
         if let timer { RunLoop.main.add(timer, forMode: .common) }
+        NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { _ = self?.access.refresh() }
+        }
+        sync.startObservingChanges()
+        Task {
+            if runsSetup && access.needsSetup {
+                await access.runSetup(confirm: Self.confirmIntegrationSetup)
+            }
+            await sync.syncActive()
+        }
+    }
+
+    private static func confirmIntegrationSetup() -> Bool {
+        let alert = NSAlert()
+        alert.messageText = "Connect Calendar and Reminders?"
+        alert.informativeText = "Countdown Menu Bar can add countdowns to Calendar and Reminders and sync items you choose into countdowns. macOS will ask for each separately; you can decline either one. Local countdowns work without access, and you can change this later in Events & Settings → Settings."
+        alert.addButton(withTitle: "Continue")
+        alert.addButton(withTitle: "Not Now")
+        NSApp.activate(ignoringOtherApps: true)
+        return alert.runModal() == .alertFirstButtonReturn
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
@@ -37,7 +78,9 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func application(_ application: NSApplication, open urls: [URL]) {
         guard let url = urls.first, url.scheme == "countdownmenubar" else { return }
-        if url.host == "settings" { management.show(settingsTab: true); return }
+        if url.host == "settings" { management.show(.settings); return }
+        if url.host == "sync" { management.show(.sync); return }
+        if url.host == "about" { management.show(.about); return }
         if url.host == "manage" { showManagement(); return }
         if url.host == "add" {
             addEvent()
@@ -54,11 +97,11 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let now = Date()
         statusItem.button?.font = settings.appKitFont
         if let event = store.selectedEvent {
-            let remaining = event.date.timeIntervalSince(now)
-            statusItem.button?.title = "\(event.title) · \(CountdownFormat.compact(until: event.date, now: now))"
-            statusItem.button?.toolTip = "\(event.title) — \(fullDate(event))"
-            statusItem.button?.setAccessibilityLabel("\(event.title), \(CountdownFormat.remaining(until: event.date, now: now)). \(fullDate(event))")
-            moonAnimator.update(progress: MoonProgress.value(for: event, now: now), completed: remaining <= 0, urgency: MoonProgress.urgency(for: event, now: now))
+            statusItem.button?.title = "\(event.title) · \(CountdownFormat.compact(for: event, now: now))"
+            let starts = now < event.startDate ? "\nStarts \(format(event.startDate, event))" : ""
+            statusItem.button?.toolTip = "\(event.title) — \(fullDate(event))\(starts)"
+            statusItem.button?.setAccessibilityLabel("\(event.title), \(CountdownFormat.remaining(for: event, now: now)). \(fullDate(event))")
+            moonAnimator.update(progress: MoonProgress.value(for: event, now: now), completed: event.isCompleted(at: now), urgency: MoonProgress.urgency(for: event, now: now))
         } else {
             moonAnimator.reset()
             statusItem.button?.title = "⏳ Add event"
@@ -110,6 +153,8 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let delete = addAction("Delete Selected Event…", #selector(deleteEvent), key: "")
         delete.isEnabled = store.selectedEvent != nil
         menu.addItem(.separator())
+        addAction("Sync Calendar and Reminders…", #selector(showSync), key: "")
+        addAction("About Countdown Menu Bar", #selector(showAbout), key: "")
         addAction("Quit Countdown", #selector(quit), key: "q")
     }
 
@@ -139,21 +184,36 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func presentEditor(event: CountdownEvent?, initialDate: Date) {
-        let editor = EventEditor()
-        if let updatedEvent = editor.run(event: event, initialDate: initialDate) {
-            store.save(updatedEvent)
-            refresh()
-            if event == nil && (editor.addToCalendar || editor.addToReminders) {
-                Task {
-                    let results = await integration.add(updatedEvent, calendar: editor.addToCalendar, reminder: editor.addToReminders)
-                    let alert = NSAlert()
-                    alert.messageText = "Countdown saved"
-                    alert.informativeText = results.joined(separator: "\n")
-                    NSApp.activate(ignoringOtherApps: true)
-                    alert.runModal()
-                }
-            }
+        // One editor per existing event; bring it forward instead of duplicating.
+        if let event, let open = editors.first(where: { $0.model.original?.id == event.id }) {
+            open.show()
+            return
         }
+        let editor = EventEditorWindow(
+            event: event, initialDate: initialDate, access: access, settings: settings,
+            openSettings: { [weak self] in self?.management.show(.settings) },
+            onSave: { [weak self] event, request in
+                guard let self else { return [] }
+                return await self.commit(event, create: request.create, update: request.update)
+            },
+            onClose: { [weak self] editor in self?.editors.removeAll { $0 === editor } }
+        )
+        editors.append(editor)
+        editor.show()
+    }
+
+    /// The single save path for the editor and App Intents: saves locally
+    /// first, then performs only the requested external writes.
+    func commit(_ event: CountdownEvent, create: [ExternalProvider], update: [ExternalProvider] = []) async -> [ExportOutcome] {
+        store.save(event)
+        refresh()
+        return await integration.perform(eventID: event.id, create: create, update: update)
+    }
+
+    private func remove(_ event: CountdownEvent) {
+        sync.recordRemoval(of: event)
+        store.delete(event.id)
+        refresh()
     }
 
     @objc private func deleteEvent() {
@@ -161,29 +221,43 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
         alert.messageText = "Delete \"\(event.title)\"?"
-        alert.informativeText = "This event will be removed from your countdown list."
+        alert.informativeText = "This event will be removed from your countdown list. Calendar and Reminders items are not deleted."
         alert.addButton(withTitle: "Delete")
         alert.addButton(withTitle: "Cancel")
         alert.alertStyle = .warning
         if alert.runModal() == .alertFirstButtonReturn {
-            store.deleteSelected()
-            refresh()
+            remove(event)
         }
     }
 
     @objc private func showManagement() { management.show() }
+    @objc private func showSync() { management.show(.sync) }
+    @objc private func showAbout() { management.show(.about) }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         management.show()
         return true
     }
 
-    func createCountdown(title: String, deadline: Date, zone: String, criticalHours: Double, calendar: Bool, reminder: Bool) async -> String {
-        let event = CountdownEvent(title: title, date: deadline, timeZoneIdentifier: zone, criticalHours: criticalHours)
-        store.save(event)
+    /// App Intents path. Requested additions for unavailable services are
+    /// reported honestly rather than as success.
+    func createCountdown(title: String, deadline: Date, zone: String, start: Date?, critical: CriticalWindow, calendar: Bool, reminder: Bool) async -> Result<String, CountdownIntentError> {
+        let now = Date()
+        let startDate = start ?? min(now, deadline.addingTimeInterval(-1))
+        guard startDate < deadline else { return .failure(.startAfterDeadline) }
+        let timeZone = EventTimeZone.resolve(zone) ?? .current
+        if case .failure(let failure) = critical.resolve(deadline: deadline, zone: timeZone) {
+            return .failure(.invalidCriticalWindow(failure.message))
+        }
+        let event = CountdownEvent(title: title, date: deadline, timeZoneIdentifier: zone, createdAt: now, startDate: startDate, critical: critical)
+        let requested = [calendar ? ExternalProvider.calendar : nil, reminder ? .reminders : nil].compactMap { $0 }
+        let outcomes = await commit(event, create: requested)
         management.show()
-        let results = await integration.add(event, calendar: calendar, reminder: reminder)
-        return (["Created \(title)."] + results).joined(separator: " ")
+        var lines = ["Created \(title)."] + outcomes.map(\.message)
+        if outcomes.contains(where: { !$0.succeeded }) {
+            lines.append("Open Events & Settings → Settings to allow access, then edit the countdown to add it.")
+        }
+        return .success(lines.joined(separator: " "))
     }
 
     @objc private func quit() {
@@ -191,18 +265,21 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func menuTitle(for event: CountdownEvent) -> String {
-        let calendar = EventTimeZone.calendar(in: event.timeZone)
-        let countdown = CountdownFormat.remaining(until: event.date, calendar: calendar)
+        let countdown = CountdownFormat.remaining(for: event)
         return "\(event.title)  ·  \(fullDate(event))  ·  \(countdown)"
     }
 
-    private func fullDate(_ event: CountdownEvent) -> String {
+    private func format(_ date: Date, _ event: CountdownEvent) -> String {
         let formatter = DateFormatter()
         formatter.calendar = EventTimeZone.calendar(in: event.timeZone)
         formatter.timeZone = event.timeZone
         formatter.dateStyle = .medium
         formatter.timeStyle = .medium
-        return "\(formatter.string(from: event.date)) \(EventTimeZone.label(event.timeZoneIdentifier, at: event.date))"
+        return formatter.string(from: date)
+    }
+
+    private func fullDate(_ event: CountdownEvent) -> String {
+        "\(format(event.date, event)) \(EventTimeZone.label(event.timeZoneIdentifier, at: event.date))"
     }
 }
 

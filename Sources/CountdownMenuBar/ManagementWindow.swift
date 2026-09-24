@@ -2,25 +2,34 @@ import AppKit
 import SwiftUI
 import ServiceManagement
 
+enum ManagementTab: Int {
+    case events, sync, settings, about
+}
+
 @MainActor
-private final class ManagementNavigation: ObservableObject {
-    @Published var selectedTab = 0
+final class ManagementNavigation: ObservableObject {
+    @Published var selectedTab = ManagementTab.events
 }
 
 @MainActor
 final class ManagementWindow {
     private let window: NSWindow
     private let navigation = ManagementNavigation()
-    init(store: EventStore, settings: CountdownSettings, add: @escaping () -> Void, edit: @escaping (CountdownEvent) -> Void) {
-        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 560), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
+    init(store: EventStore, settings: CountdownSettings, access: IntegrationAccess, sync: CalendarSync,
+         add: @escaping () -> Void, edit: @escaping (CountdownEvent) -> Void, delete: @escaping (CountdownEvent) -> Void) {
+        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 780, height: 600), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
         window.title = "Countdown Menu Bar"
-        window.minSize = NSSize(width: 650, height: 440)
+        window.minSize = NSSize(width: 680, height: 480)
         window.isReleasedWhenClosed = false
-        window.contentView = NSHostingView(rootView: ManagementView(store: store, settings: settings, navigation: navigation, add: add, edit: edit))
+        window.contentView = NSHostingView(rootView: ManagementView(
+            store: store, settings: settings, access: access, sync: sync, navigation: navigation,
+            add: add, edit: edit, delete: delete
+        ))
         window.center()
     }
-    func show(settingsTab: Bool = false) {
-        if settingsTab { navigation.selectedTab = 1 }
+
+    func show(_ tab: ManagementTab? = nil) {
+        if let tab { navigation.selectedTab = tab }
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
     }
@@ -29,25 +38,36 @@ final class ManagementWindow {
 private struct ManagementView: View {
     @ObservedObject var store: EventStore
     @ObservedObject var settings: CountdownSettings
+    @ObservedObject var access: IntegrationAccess
+    @ObservedObject var sync: CalendarSync
     @ObservedObject var navigation: ManagementNavigation
     @State private var deleteCandidate: CountdownEvent?
     let add: () -> Void
     let edit: (CountdownEvent) -> Void
+    let delete: (CountdownEvent) -> Void
 
     var body: some View {
         TabView(selection: $navigation.selectedTab) {
-            events.tabItem { Label("Events", systemImage: "calendar") }.tag(0)
-            settingsView.tabItem { Label("Settings", systemImage: "gearshape") }.tag(1)
+            events.tabItem { Label("Events", systemImage: "calendar") }.tag(ManagementTab.events)
+            SyncView(sync: sync, access: access).tabItem { Label("Sync", systemImage: "arrow.triangle.2.circlepath") }.tag(ManagementTab.sync)
+            settingsView.tabItem { Label("Settings", systemImage: "gearshape") }.tag(ManagementTab.settings)
+            AboutView().tabItem { Label("About", systemImage: "info.circle") }.tag(ManagementTab.about)
         }
         .padding(20)
         .font(settings.swiftUIFont)
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            settings.refreshLoginStatus()
+            if access.refresh() { sync.reloadContainers() }
+        }
         .alert("Delete event?", isPresented: Binding(get: { deleteCandidate != nil }, set: { if !$0 { deleteCandidate = nil } })) {
             Button("Cancel", role: .cancel) { deleteCandidate = nil }
             Button("Delete", role: .destructive) {
-                if let event = deleteCandidate { store.delete(event.id) }
+                if let event = deleteCandidate { delete(event) }
                 deleteCandidate = nil
             }
-        } message: { Text("\(deleteCandidate?.title ?? "This event") will be removed from your countdown list.") }
+        } message: {
+            Text("\(deleteCandidate?.title ?? "This event") will be removed from your countdown list. Calendar and Reminders items are not deleted.")
+        }
     }
 
     private var events: some View {
@@ -59,6 +79,9 @@ private struct ManagementView: View {
                 }
                 Spacer()
                 Button("Add Event…", action: add).keyboardShortcut("n")
+            }
+            if let error = store.loadError {
+                Text(error).foregroundStyle(.red)
             }
             if store.events.isEmpty {
                 Spacer()
@@ -74,11 +97,12 @@ private struct ManagementView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(event.title).bold()
                                 Text(deadline(event)).font(.caption).foregroundStyle(.secondary)
-                                Text("Critical window: \(event.criticalHours.formatted()) hours").font(.caption).foregroundStyle(.secondary)
+                                Text("Starts \(format(event.startDate, event)) · critical window \(event.critical.label)").font(.caption).foregroundStyle(.secondary)
+                                badges(event)
                             }
                             Spacer()
                             TimelineView(.periodic(from: .now, by: 1)) { context in
-                                Text(CountdownFormat.compact(until: event.date, now: context.date)).monospacedDigit()
+                                Text(CountdownFormat.compact(for: event, now: context.date)).monospacedDigit()
                             }
                             Button("Edit…") { edit(event) }
                             Button { deleteCandidate = event } label: { Image(systemName: "trash") }.help("Delete event")
@@ -89,12 +113,38 @@ private struct ManagementView: View {
         }.padding()
     }
 
-    private func deadline(_ event: CountdownEvent) -> String {
+    @ViewBuilder private func badges(_ event: CountdownEvent) -> some View {
+        let notes = statusNotes(event)
+        if !notes.isEmpty {
+            Text(notes.joined(separator: " · ")).font(.caption)
+                .foregroundStyle(event.needsStartCorrection || event.source.map { $0.status != .current } == true ? .orange : .secondary)
+        }
+    }
+
+    private func statusNotes(_ event: CountdownEvent) -> [String] {
+        var notes: [String] = []
+        if let source = event.source {
+            notes.append("Synced from \(source.key.provider.name)" + (source.isDateOnly ? (source.key.provider == .calendar ? " (all-day: counts to midnight at the start of the day)" : " (date only: counts to 23:59:59)") : ""))
+            if source.completed { notes.append("Completed in Reminders") }
+            if source.status == .missing { notes.append("Source deleted or moved; last values kept") }
+            if source.status == .inaccessible { notes.append("Source not accessible; last values kept") }
+        }
+        if event.calendarExport != nil { notes.append("In Calendar") }
+        if event.reminderExport != nil { notes.append("In Reminders") }
+        if event.needsStartCorrection { notes.append("Start is after the new deadline. Edit to correct") }
+        return notes
+    }
+
+    private func format(_ date: Date, _ event: CountdownEvent) -> String {
         let formatter = DateFormatter()
         formatter.timeZone = event.timeZone
         formatter.dateStyle = .medium
         formatter.timeStyle = .medium
-        return "\(formatter.string(from: event.date)) · \(event.timeZoneIdentifier)"
+        return formatter.string(from: date)
+    }
+
+    private func deadline(_ event: CountdownEvent) -> String {
+        "\(format(event.date, event)) · \(event.timeZoneIdentifier)"
     }
 
     private var settingsView: some View {
@@ -119,18 +169,92 @@ private struct ManagementView: View {
                 Text("Widgets use their own system-sized typography to fit each widget size.").font(.caption).foregroundStyle(.secondary)
             }
             Section("Moon phases") {
-                Text("The moon wanes from full at creation to empty at the critical window, then fills toward red as the deadline approaches. Set each event’s critical window in its editor; the default is 24 hours.")
+                Text("The moon stays full until each event’s start, wanes to empty at its critical window, then fills toward red as the deadline approaches. Set the start and critical window in each event’s editor; the default window is 24 hours.")
             }
-            Section("Calendar and Reminders") {
-                Text("When adding an event, optionally create a Calendar event or Reminder. Calendar events last 30 minutes from the deadline; reminders are due at the deadline. The default calendar and reminder list are used. Copies are independent: later edits or deletions are not synchronized.")
+            Section("Calendar and Reminders access") {
+                ForEach(ExternalProvider.allCases) { provider in
+                    IntegrationStatusRow(access: access, provider: provider)
+                }
+                Text("Access lets you add countdowns to Calendar or Reminders and sync items into countdowns. Local countdowns work without it.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Section("Siri and Shortcuts") {
                 Text("Use Create Countdown in the Shortcuts app, or say ‘Create a countdown in Countdown Menu Bar’ to Siri. Siri availability depends on your Mac’s language and settings.")
                 Button("Open Shortcuts") { NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Shortcuts.app")) }
             }
         }.formStyle(.grouped)
-        .onAppear { settings.refreshLoginStatus() }
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in settings.refreshLoginStatus() }
+        .onAppear {
+            settings.refreshLoginStatus()
+            access.refresh()
+        }
+    }
+}
+
+struct IntegrationStatusRow: View {
+    @ObservedObject var access: IntegrationAccess
+    let provider: ExternalProvider
+
+    var body: some View {
+        let state = access.access(provider)
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(provider.name)
+                Text(description(state)).font(.caption).foregroundStyle(state.canRead ? Color.secondary : Color.orange)
+            }
+            Spacer()
+            if state.canRequest {
+                Button(state.status == .writeOnly ? "Request Full Access" : "Request Access") { Task { await access.request(provider) } }
+            } else if !state.canRead {
+                Button("Open System Settings") { access.openSystemSettings(provider) }
+            }
+        }
     }
 
+    private func description(_ state: ServiceAccess) -> String {
+        switch state.status {
+        case .fullAccess: return "Full access: can add items and sync."
+        case .writeOnly: return "Add-only access: can add events, but cannot sync or update them."
+        case .notDetermined: return "Not requested yet."
+        case .denied: return "Denied. Allow access in System Settings → Privacy & Security."
+        case .restricted: return "Restricted by this Mac’s settings."
+        case .unknown: return "Unknown status; treated as not allowed."
+        }
+    }
+}
+
+struct AboutView: View {
+    static let repository = URL(string: "https://github.com/Kymer0615/mac_countdown")!
+    static let coffee = URL(string: "https://buymeacoffee.com/ziyang")!
+
+    private var version: String {
+        let info = Bundle.main.infoDictionary
+        guard let short = info?["CFBundleShortVersionString"] as? String else { return "Development build" }
+        return "Version \(short) (\(info?["CFBundleVersion"] as? String ?? "?"))"
+    }
+
+    var body: some View {
+        VStack(spacing: 14) {
+            Spacer()
+            Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 96, height: 96).accessibilityHidden(true)
+            Text("Countdown Menu Bar").font(.title.bold())
+            Text(version).foregroundStyle(.secondary)
+            Text("Exact countdowns in your menu bar and desktop widgets, with moon phases, time zones, and Calendar and Reminders sync.")
+                .multilineTextAlignment(.center).frame(maxWidth: 440)
+            HStack(spacing: 12) {
+                Button { NSWorkspace.shared.open(Self.repository) } label: {
+                    Label("View on GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
+                }
+                .accessibilityHint("Opens github.com/Kymer0615/mac_countdown in your browser")
+                Button { NSWorkspace.shared.open(Self.coffee) } label: {
+                    Label("Buy me a coffee", systemImage: "cup.and.saucer.fill")
+                }
+                .accessibilityHint("Opens buymeacoffee.com/ziyang in your browser")
+            }
+            .controlSize(.large)
+            Text("Links open in your default browser.").font(.caption).foregroundStyle(.secondary)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+    }
 }

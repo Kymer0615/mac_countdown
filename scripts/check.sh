@@ -7,6 +7,7 @@ mkdir -p .build/checks
 swiftc -module-cache-path .build/checks/modulecache \
     Sources/CountdownMenuBar/CountdownFormat.swift \
     Sources/CountdownMenuBar/CountdownEvent.swift \
+    Sources/CountdownMenuBar/CriticalWindow.swift \
     Sources/CountdownMenuBar/EventTimeZone.swift \
     Sources/CountdownMenuBar/MoonProgress.swift \
     Sources/CountdownMenuBar/WidgetEventData.swift \

@@ -137,7 +137,7 @@ struct CountdownWidgetContent: View {
         VStack(alignment: .leading, spacing: 5) {
             Text(event.title).font(.subheadline.weight(.medium)).lineLimit(1)
             HStack(spacing: 7) {
-                WidgetMoon(progress: progress(event), urgency: MoonProgress.urgency(for: event, now: entry.date), completed: event.date <= entry.date).frame(width: 24, height: 24)
+                WidgetMoon(progress: progress(event), urgency: MoonProgress.urgency(for: event, now: entry.date), completed: event.isCompleted(at: entry.date)).frame(width: 24, height: 24)
                 countdown(event).font(.system(.title3, design: .rounded, weight: .semibold)).minimumScaleFactor(0.7)
             }
             Text(deadline(event)).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
@@ -146,7 +146,7 @@ struct CountdownWidgetContent: View {
 
     private func eventRow(_ event: CountdownEvent) -> some View {
         HStack(spacing: 9) {
-            WidgetMoon(progress: progress(event), urgency: MoonProgress.urgency(for: event, now: entry.date), completed: event.date <= entry.date).frame(width: 22, height: 22)
+            WidgetMoon(progress: progress(event), urgency: MoonProgress.urgency(for: event, now: entry.date), completed: event.isCompleted(at: entry.date)).frame(width: 22, height: 22)
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 8) {
                     Text(event.title).font(.subheadline.weight(.medium)).lineLimit(1)
@@ -161,14 +161,14 @@ struct CountdownWidgetContent: View {
 
     @ViewBuilder private func countdown(_ event: CountdownEvent) -> some View {
         let seconds = event.date.timeIntervalSince(entry.date)
-        if seconds > 0 && seconds < 3_600 {
+        if !event.isCompleted(at: entry.date) && seconds < 3_600 {
             // System-rendered timer text remains live while the extension sleeps
             // and stops at zero instead of counting up after the deadline.
             Text(timerInterval: entry.date...event.date, countsDown: true, showsHours: false)
                 .monospacedDigit().lineLimit(1)
                 .accessibilityLabel("Minutes and seconds remaining")
         } else {
-            Text(CountdownFormat.compact(until: event.date, now: entry.date)).monospacedDigit().lineLimit(1)
+            Text(CountdownFormat.compact(for: event, now: entry.date)).monospacedDigit().lineLimit(1)
         }
     }
 

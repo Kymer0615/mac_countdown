@@ -21,8 +21,8 @@ enum WidgetEventData {
 
     static func ordered(_ events: [CountdownEvent], now: Date) -> [CountdownEvent] {
         events.sorted { lhs, rhs in
-            let lhsDone = lhs.date <= now
-            let rhsDone = rhs.date <= now
+            let lhsDone = lhs.isCompleted(at: now)
+            let rhsDone = rhs.isCompleted(at: now)
             if lhsDone != rhsDone { return !lhsDone }
             if lhs.date != rhs.date { return lhsDone ? lhs.date > rhs.date : lhs.date < rhs.date }
             if lhs.title != rhs.title { return lhs.title < rhs.title }
@@ -36,8 +36,8 @@ enum WidgetEventData {
         let end = now.addingTimeInterval(3_600)
         var dates = Set((0...60).map { now.addingTimeInterval(Double($0) * 60) })
         for event in events {
-            for threshold: TimeInterval in [7 * 86_400, 86_400, 3_600, event.criticalHours * 3600, 0] {
-                let boundary = event.date.addingTimeInterval(-threshold)
+            let precision = ([7 * 86_400, 86_400, 3_600, 0] as [TimeInterval]).map { event.date.addingTimeInterval(-$0) }
+            for boundary in precision + [event.criticalBoundary, event.startDate] {
                 if boundary > now && boundary <= end {
                     dates.insert(boundary)
                     // Enter the next precision band immediately after a boundary.
