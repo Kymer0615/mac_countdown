@@ -309,6 +309,7 @@
 				"SWIFT_COMPILATION_MODE" = "singlefile";
 				"ENABLE_APP_SANDBOX" = "NO";
 				"INFOPLIST_FILE" = "Build/App-Info.plist";
+				"CODE_SIGN_ENTITLEMENTS" = "Build/App.entitlements";
 				"LD_RUNPATH_SEARCH_PATHS" = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -363,6 +364,7 @@
 				"SWIFT_COMPILATION_MODE" = "wholemodule";
 				"ENABLE_APP_SANDBOX" = "NO";
 				"INFOPLIST_FILE" = "Build/App-Info.plist";
+				"CODE_SIGN_ENTITLEMENTS" = "Build/App.entitlements";
 				"LD_RUNPATH_SEARCH_PATHS" = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

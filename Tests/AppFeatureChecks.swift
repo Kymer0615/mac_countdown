@@ -143,7 +143,16 @@ struct AppFeatureChecks {
         precondition(declinedAccess.refresh() && declinedAccess.reminders.canRead)
         declined.statuses[.reminders] = .denied
         precondition(declinedAccess.refresh() && !declinedAccess.reminders.canCreate)
-        print("Permission matrix, sequential setup, upgrade, and revocation checks passed")
+        // A request that returns without a decision is reported, not silent.
+        let silent = MockEventKit()
+        silent.grantOnRequest = [.calendar: .notDetermined]
+        let silentAccess = IntegrationAccess(adapter: silent, defaults: isolated())
+        await silentAccess.request(.calendar)
+        precondition(silent.requests == [.calendar] && silentAccess.requestProblem[.calendar] != nil)
+        silent.grantOnRequest = [.calendar: .fullAccess]
+        await silentAccess.request(.calendar)
+        precondition(silentAccess.requestProblem[.calendar] == nil && silentAccess.calendar.canRead)
+        print("Permission matrix, sequential setup, upgrade, revocation, and silent-request checks passed")
     }
 
     // MARK: Editor

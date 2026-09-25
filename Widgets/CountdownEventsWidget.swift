@@ -219,10 +219,14 @@ struct WidgetMoon: View {
             Image(systemName: "checkmark.circle").foregroundStyle(.secondary).accessibilityLabel("Deadline reached")
         } else {
             let color = Color(hue: MoonProgress.hue(progress: urgency), saturation: 0.88, brightness: 0.88)
+            // Nothing overlaps the terminator, so thin crescents stay visible.
             ZStack {
-                Circle().fill(.primary.opacity(0.08))
-                MoonPhase(progress: progress).fill(color)
-                Circle().strokeBorder(color, lineWidth: 1)
+                Circle().strokeBorder(color, lineWidth: 1.2)
+                ZStack {
+                    Circle().fill(.primary.opacity(0.35))
+                    MoonPhase(progress: progress).fill(color)
+                }
+                .padding(2.5)
             }
             .padding(1)
             .accessibilityLabel("Moon illuminated \(Int(progress * 100)) percent")

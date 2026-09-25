@@ -99,7 +99,7 @@ final class CountdownApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if let event = store.selectedEvent {
             statusItem.button?.title = "\(event.title) · \(CountdownFormat.compact(for: event, now: now))"
             let starts = now < event.startDate ? "\nStarts \(format(event.startDate, event))" : ""
-            statusItem.button?.toolTip = "\(event.title) — \(fullDate(event))\(starts)"
+            statusItem.button?.toolTip = "\(event.title) — \(fullDate(event))\(starts)\n\(MoonProgress.summary(for: event, now: now))"
             statusItem.button?.setAccessibilityLabel("\(event.title), \(CountdownFormat.remaining(for: event, now: now)). \(fullDate(event))")
             moonAnimator.update(progress: MoonProgress.value(for: event, now: now), completed: event.isCompleted(at: now), urgency: MoonProgress.urgency(for: event, now: now))
         } else {

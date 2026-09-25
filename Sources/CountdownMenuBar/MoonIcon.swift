@@ -5,17 +5,19 @@ enum MoonIcon {
         let fill = min(1, max(0, progress))
         let image = NSImage(size: NSSize(width: 20, height: 20), flipped: false) { _ in
             let center = NSPoint(x: 10, y: 10)
-            let radius = 7.25
-            let circle = NSBezierPath(ovalIn: NSRect(x: 2.75, y: 2.75, width: 14.5, height: 14.5))
-            NSColor.labelColor.withAlphaComponent(0.12).setFill()
-            circle.fill()
+            // The disk sits inside a separate neutral ring, so nothing is drawn
+            // over the terminator and a thin unlit crescent stays visible.
+            let radius = 6.75
+            let disk = NSBezierPath(ovalIn: NSRect(x: 10 - radius, y: 10 - radius, width: radius * 2, height: radius * 2))
+            NSColor.labelColor.withAlphaComponent(0.38).setFill()
+            disk.fill()
 
             let color = NSColor(
                 calibratedHue: MoonProgress.hue(progress: urgency ?? fill),
                 saturation: 0.88, brightness: 0.88, alpha: 1
             )
             let phase = NSBezierPath()
-            // The right limb and elliptical terminator form a waxing moon.
+            // The right limb and elliptical terminator form the lit area.
             // A linear terminator scale makes the illuminated area equal to fill.
             for step in 0...64 {
                 let angle = Double.pi / 2 - Double(step) * Double.pi / 64
@@ -33,13 +35,10 @@ enum MoonIcon {
             color.setFill()
             phase.fill()
 
-            // A neutral backing keeps the colored outline legible on both themes.
-            NSColor.labelColor.withAlphaComponent(0.65).setStroke()
-            circle.lineWidth = 1.8
-            circle.stroke()
-            color.setStroke()
-            circle.lineWidth = 1
-            circle.stroke()
+            let ring = NSBezierPath(ovalIn: NSRect(x: 2, y: 2, width: 16, height: 16))
+            ring.lineWidth = 1.2
+            color.withAlphaComponent(0.9).setStroke()
+            ring.stroke()
             return true
         }
         image.isTemplate = false

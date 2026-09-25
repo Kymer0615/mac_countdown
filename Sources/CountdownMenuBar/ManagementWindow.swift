@@ -102,7 +102,18 @@ private struct ManagementView: View {
                             }
                             Spacer()
                             TimelineView(.periodic(from: .now, by: 1)) { context in
-                                Text(CountdownFormat.compact(for: event, now: context.date)).monospacedDigit()
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    HStack(spacing: 6) {
+                                        if event.isCompleted(at: context.date) {
+                                            Image(systemName: "checkmark.circle").foregroundStyle(.secondary)
+                                        } else {
+                                            Image(nsImage: MoonIcon.image(progress: MoonProgress.value(for: event, now: context.date), urgency: MoonProgress.urgency(for: event, now: context.date)))
+                                        }
+                                        Text(CountdownFormat.compact(for: event, now: context.date)).monospacedDigit()
+                                    }
+                                    Text(MoonProgress.summary(for: event, now: context.date)).font(.caption2).foregroundStyle(.secondary)
+                                }
+                                .accessibilityElement(children: .combine)
                             }
                             Button("Edit…") { edit(event) }
                             Button { deleteCandidate = event } label: { Image(systemName: "trash") }.help("Delete event")
@@ -200,6 +211,10 @@ struct IntegrationStatusRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(provider.name)
                 Text(description(state)).font(.caption).foregroundStyle(state.canRead ? Color.secondary : Color.orange)
+                if let problem = access.requestProblem[provider] {
+                    Text(problem).font(.caption).foregroundStyle(.red)
+                    Button("Open System Settings") { access.openSystemSettings(provider) }.controlSize(.small)
+                }
             }
             Spacer()
             if state.canRequest {

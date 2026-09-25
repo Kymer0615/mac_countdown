@@ -43,6 +43,18 @@ enum MoonProgress {
         }
     }
 
+    /// Text form of the phase, so small changes are readable even when a
+    /// 2% change is under a pixel in the menu bar icon.
+    static func summary(for event: CountdownEvent, now: Date) -> String {
+        let percent = Int((value(for: event, now: now) * 100).rounded())
+        switch phase(for: event, now: now) {
+        case .notStarted: return "Moon full until start"
+        case .waning: return "Moon \(percent)% · waning"
+        case .critical: return "Moon \(percent)% · critical"
+        case .completed: return "Deadline reached"
+        }
+    }
+
     static func hue(progress: Double) -> Double {
         (1 - clamp(progress)) / 3
     }

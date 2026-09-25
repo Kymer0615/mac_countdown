@@ -86,6 +86,8 @@ These compact units use elapsed time (one day is 24 hours), rounding down except
 
 Each event has a **start** (now, by default) and a **critical window**. The moon stays **full and green before the start**, wanes to empty between the start and the critical window, then fills again toward the deadline. Color expresses urgency independently: green → yellow at the critical boundary → red at the deadline. A checkmark appears when the deadline is reached. Starts may be in the past or future; the menu bar always counts down to the deadline.
 
+Before the critical window, the lit part of the moon is the time left until the critical window divided by the time from the start to the critical window. For example, 20 days before a 40-day waning period ends, the moon is half lit. Small changes can be less than a pixel in the menu bar, so the exact percentage also appears in the menu bar tooltip and the Events window.
+
 The critical window defaults to **24 hours**. Choose **Seconds**, **Minutes**, **Hours**, **Days**, **Months**, a **Custom duration** (months, days, hours, minutes, and seconds together), or an **Exact date and time**. The editor shows the resolved boundary in the event's zone and in UTC.
 
 - Seconds, minutes, and hours are elapsed time and accept decimals (resolved to whole seconds). The minimum is one second; there is no upper limit apart from dates the calendar cannot represent.
@@ -123,7 +125,7 @@ Keep the app in Applications before enabling login startup. Settings are saved l
 
 ## Calendar and Reminders
 
-On first launch after installing or upgrading, the app briefly explains why it asks, then macOS requests **Calendar** and **Reminders** access one after the other. You can allow either, both, or neither; declining one does not skip the other, and local countdowns work without access. Change this later in **Settings**.
+On first launch after installing or upgrading, the app briefly explains why it asks, then macOS requests **Calendar** and **Reminders** access one after the other. You can allow either, both, or neither; declining one does not skip the other, and local countdowns work without access. Change this later in **Settings**. If no Calendar prompt appeared in version 1.3.0, version 1.3.1 asks again once. If macOS still shows no prompt, allow access in **System Settings → Privacy & Security → Calendars**, or reset the earlier decision with `tccutil reset Calendar com.local.CountdownMenuBar`.
 
 ### Adding countdowns to Calendar or Reminders
 
@@ -173,13 +175,13 @@ Run `sh scripts/check.sh` for date, migration, critical-window, moon-lifecycle, 
 ## Publishing a release
 
 1. Set matching versions and increment build numbers in both `Build` Info.plist files. Commit the release changes on a clean branch.
-2. Run `sh scripts/package-release.sh v1.3.0` (replace the version for future releases). This runs checks, builds both architectures, verifies signatures, and writes a ZIP and `.sha256` file to `dist/`. Existing archives are never overwritten.
+2. Run `sh scripts/package-release.sh v1.3.1` (replace the version for future releases). This runs checks, builds both architectures, verifies signatures, and writes a ZIP and `.sha256` file to `dist/`. Existing archives are never overwritten.
 3. Authenticate with `gh auth login`, then tag the committed source and push the tag:
 
    ```sh
-   git tag -a v1.3.0 -m "Countdown Menu Bar 1.3.0"
-   git push origin main v1.3.0
-   gh release create v1.3.0 dist/Countdown-Menu-Bar-1.3.0-universal.zip dist/Countdown-Menu-Bar-1.3.0-universal.zip.sha256 --verify-tag --title "Countdown Menu Bar 1.3.0" --notes-file dist/release-notes.md
+   git tag -a v1.3.1 -m "Countdown Menu Bar 1.3.1"
+   git push origin main v1.3.1
+   gh release create v1.3.1 dist/Countdown-Menu-Bar-1.3.1-universal.zip dist/Countdown-Menu-Bar-1.3.1-universal.zip.sha256 --verify-tag --title "Countdown Menu Bar 1.3.1" --notes-file dist/release-notes.md
    ```
 
    Write release notes to `dist/release-notes.md` first, including the signing limitation. The repository and release downloads must be public.
@@ -194,3 +196,7 @@ If Countdown Menu Bar is useful to you, you can support its development:
 <a href="https://buymeacoffee.com/ziyang"><img src="docs/images/buy-me-a-coffee.svg" alt="Buy me a coffee" height="36"></a>
 
 The **About** tab in the app has the same link and a link to this repository. Both open in your browser; nothing is charged automatically.
+
+## License
+
+Countdown Menu Bar is available under the [MIT License](LICENSE).

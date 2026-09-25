@@ -6,10 +6,14 @@ import Foundation
 @MainActor
 final class IntegrationAccess: ObservableObject {
     static let setupKey = "countdown.integrationSetupVersion"
-    static let setupVersion = 1
+    /// 2: 1.3.0 builds lacked the Calendar entitlement, so their prompt never
+    /// appeared; ask once more where macOS can still show a prompt.
+    static let setupVersion = 2
 
     @Published private(set) var calendar: ServiceAccess
     @Published private(set) var reminders: ServiceAccess
+    /// Set when macOS returned without a decision, so the UI never looks idle.
+    @Published private(set) var requestProblem: [ExternalProvider: String] = [:]
     let adapter: EventKitAdapter
     private let defaults: UserDefaults
 
@@ -40,9 +44,14 @@ final class IntegrationAccess: ObservableObject {
     /// matching Privacy & Security pane instead of repeating a denied request.
     func request(_ provider: ExternalProvider) async {
         refresh()
+        requestProblem[provider] = nil
         if access(provider).canRequest {
+            let before = access(provider).status
             _ = await adapter.requestFullAccess(provider)
             refresh()
+            if access(provider).status == before {
+                requestProblem[provider] = "macOS did not show a \(provider.name) prompt. Open System Settings → Privacy & Security → \(provider == .calendar ? "Calendars" : "Reminders") to allow access."
+            }
         } else if !access(provider).canRead {
             openSystemSettings(provider)
         }

@@ -36,6 +36,11 @@ for bundle in "$app" "$widget"; do
     done
     codesign --verify --deep --strict "$bundle"
 done
+# Without this hardened-runtime entitlement, Calendar access is denied silently.
+codesign -d --entitlements - --xml "$app" 2>/dev/null | grep -q 'com.apple.security.personal-information.calendars' || {
+    echo 'Missing Calendar entitlement in the app signature.' >&2
+    exit 1
+}
 ditto -c -k --keepParent "$app" "$release_tmp/release.zip"
 ditto -x -k "$release_tmp/release.zip" "$release_tmp/verify"
 codesign --verify --deep --strict "$release_tmp/verify/Countdown Menu Bar.app"

@@ -67,6 +67,15 @@ struct CountdownFormatChecks {
         precondition(MoonProgress.phase(for: future, now: future.date) == .completed)
         let futureUrgency = stride(from: 0.0, through: 21, by: 0.25).map { MoonProgress.urgency(for: future, now: creation.addingTimeInterval($0 * day)) }
         precondition(futureUrgency == futureUrgency.sorted() && futureUrgency.first == 0 && futureUrgency.last == 1)
+        // Before the critical window: fill = remaining time to the boundary / (boundary − start).
+        for fraction in stride(from: 0.0, through: 1.0, by: 0.05) {
+            let span = future.criticalBoundary.timeIntervalSince(future.startDate)
+            let instant = future.startDate.addingTimeInterval(fraction * span)
+            let expected = future.criticalBoundary.timeIntervalSince(instant) / span
+            precondition(abs(MoonProgress.value(for: future, now: instant) - expected) < 1e-9)
+        }
+        precondition(MoonProgress.summary(for: future, now: creation.addingTimeInterval(12.5 * day)) == "Moon 50% · waning")
+        precondition(MoonProgress.summary(for: future, now: creation) == "Moon full until start")
         var lateStart = future
         lateStart.startDate = creation.addingTimeInterval(18 * day)
         precondition(MoonProgress.phase(for: lateStart, now: lateStart.startDate) == .critical, "Boundary before start begins critical")
